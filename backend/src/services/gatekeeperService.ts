@@ -1,4 +1,8 @@
+
+import { PrismaClient, User, SubscriptionTier } from '@prisma/client';
+
 import { PrismaClient, User, SubscriptionTier, Tier } from '@prisma/client';
+
 import { GraphQLError } from 'graphql';
 
 const defaultFreeTier: SubscriptionTier = {

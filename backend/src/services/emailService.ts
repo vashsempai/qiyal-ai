@@ -1,5 +1,56 @@
 import nodemailer from 'nodemailer';
 
+// 1. Lazy-initialize the Nodemailer transporter
+// =============================================
+
+let transporter: nodemailer.Transporter | null = null;
+let transporterPromise: Promise<nodemailer.Transporter | null> | null = null;
+
+const getTransporter = (): Promise<nodemailer.Transporter | null> => {
+    // If we're in a test environment, don't initialize the transporter.
+    if (process.env.NODE_ENV === 'test') {
+        return Promise.resolve(null);
+    }
+
+    // If the promise already exists, return it to avoid re-initializing.
+    if (transporterPromise) {
+        return transporterPromise;
+    }
+
+    // Create a new promise for initialization.
+    transporterPromise = new Promise((resolve) => {
+        // For a real app, use a robust email service like SendGrid, Mailgun, or AWS SES.
+        // The configuration should be stored securely in environment variables.
+        const newTransporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
+            port: parseInt(process.env.EMAIL_PORT || '587', 10),
+            secure: (process.env.EMAIL_SECURE === 'true'), // true for 465, false for other ports
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        // Verify connection configuration.
+        newTransporter.verify((error) => {
+            if (error) {
+                console.error("Email transporter configuration error:", error);
+                // In case of error, resolve with null to prevent sending emails.
+                resolve(null);
+            } else {
+                console.log("Email server is ready to take our messages");
+                transporter = newTransporter;
+                resolve(transporter);
+            }
+        });
+    });
+
+    return transporterPromise;
+};
+
+// Initialize the transporter when the app starts, but not in a test environment.
+getTransporter();
+
 // 1. Create a Nodemailer transporter
 // ===================================
 // For a real app, use a robust email service like SendGrid, Mailgun, or AWS SES.
@@ -23,6 +74,7 @@ transporter.verify(function (error, success) {
     }
 });
 
+
 // 2. Define Email Sending Functions
 // ===================================
 
@@ -37,8 +89,20 @@ interface MailOptions {
  * A generic function to send an email.
  */
 const sendEmail = async (mailOptions: MailOptions) => {
+
+  const emailTransporter = await getTransporter();
+
+  if (!emailTransporter) {
+    console.log(`Email sending is disabled. Would have sent to ${mailOptions.to} with subject "${mailOptions.subject}"`);
+    return; // Silently fail in test env or if config is bad
+  }
+
+  try {
+    await emailTransporter.sendMail({
+
   try {
     await transporter.sendMail({
+
       from: `"Qiyal AI" <${process.env.EMAIL_FROM || 'noreply@qiyal.ai'}>`,
       ...mailOptions,
     });
