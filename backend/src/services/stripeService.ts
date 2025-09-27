@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 
+
 let stripe: Stripe | null = null;
 
 const getStripeClient = (): Stripe | null => {
@@ -20,6 +21,16 @@ const getStripeClient = (): Stripe | null => {
 };
 
 
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY is not set in environment variables.');
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2025-08-27.basil',
+  typescript: true,
+});
+
+
 // In a real application, these prices would be managed in your Stripe dashboard
 // and fetched via the API, not hardcoded.
 const priceIds: Record<string, string> = {
@@ -37,17 +48,23 @@ export const createSubscriptionCheckoutSession = async (
   userId: string,
   tier: 'PRO' | 'ENTERPRISE'
 ): Promise<Stripe.Checkout.Session> => {
+
   const stripeClient = getStripeClient();
   if (!stripeClient) {
     throw new Error('Stripe has not been configured.');
   }
+
 
   const priceId = priceIds[tier];
   if (!priceId) {
     throw new Error(`Invalid tier provided: ${tier}`);
   }
 
+
   const session = await stripeClient.checkout.sessions.create({
+
+  const session = await stripe.checkout.sessions.create({
+
     payment_method_types: ['card'],
     line_items: [
       {
@@ -80,10 +97,12 @@ export const handleStripeWebhook = async (
     signature: string | string[] | undefined,
     body: Buffer
   ): Promise<void> => {
+
     const stripeClient = getStripeClient();
     if (!stripeClient) {
       throw new Error('Stripe has not been configured.');
     }
+
 
     if (!process.env.STRIPE_WEBHOOK_SECRET) {
       throw new Error('STRIPE_WEBHOOK_SECRET is not set.');
@@ -95,7 +114,11 @@ export const handleStripeWebhook = async (
     let event: Stripe.Event;
 
     try {
+
       event = stripeClient.webhooks.constructEvent(
+
+      event = stripe.webhooks.constructEvent(
+
         body,
         signature,
         process.env.STRIPE_WEBHOOK_SECRET

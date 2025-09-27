@@ -13,7 +13,9 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
     networks:
       - qiyal_network
     healthcheck:
@@ -54,6 +56,10 @@ services:
       PINECONE_API_KEY: ${PINECONE_API_KEY}
       PINECONE_INDEX_NAME: ${PINECONE_INDEX_NAME}
       PORT: 4000
+
+    ports:
+      - "4000:4000"
+
     depends_on:
       postgres:
         condition: service_healthy

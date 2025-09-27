@@ -1,11 +1,23 @@
 import { gql } from 'graphql-tag';
 
 export const typeDefs = gql`
+
   # =================================
   # SCALAR & ENUM TYPES
   # =================================
 
   scalar DateTime
+
+
+  # Scalar types
+  scalar DateTime
+
+  # Enums
+  enum MessageRole {
+    user
+    assistant
+  }
+
 
   enum UserRole {
     CLIENT
@@ -17,6 +29,7 @@ export const typeDefs = gql`
     IN_PROGRESS
     CLOSED
     COMPLETED
+
     CANCELLED
   }
 
@@ -28,6 +41,11 @@ export const typeDefs = gql`
   # =================================
   # CORE TYPES
   # =================================
+
+
+  }
+
+  # Core Types
 
   type User {
     id: ID!
@@ -59,12 +77,37 @@ export const typeDefs = gql`
     reviewsReceived: [Review!]
     favoriteProjects: [Project!]
     favoriteFreelancers: [User!]
+
+    xp: Int!
+    level: String!
+    tokens: Int!
+    subscription: SubscriptionTier
+    achievements: [UserAchievement!]
+    createdAt: DateTime!
+
   }
 
   type AuthPayload {
     token: String!
     user: User!
   }
+
+
+  type Message {
+    id: ID!
+    content: String!
+    role: MessageRole!
+    createdAt: DateTime!
+  }
+
+  type Conversation {
+    id: ID!
+    title: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    messages: [Message!]!
+  }
+
 
   type Project {
     id: ID!
@@ -73,6 +116,7 @@ export const typeDefs = gql`
     budget: Float!
     deadline: DateTime!
     status: ProjectStatus!
+
     skills: [String!]!
     owner: User!
     ownerId: ID!
@@ -92,16 +136,48 @@ export const typeDefs = gql`
     user: User! # The freelancer who made the bid
     project: Project!
     createdAt: DateTime!
+
+    canShowInPortfolio: Boolean!
+    skills: [String!]!
+    owner: User!
+    ownerId: ID!
+    bids: [Bid!]
+    category: Category
+    categoryId: ID
+  }
+
+  type Freelancer {
+    id: ID!
+    name: String!
+    email: String!
+    skills: [String!]!
+    experience: Int!
+    bio: String!
+    hourlyRate: Float!
+    location: String
+    portfolio: String
+    reviews: [Review!]
+    projects: [Project!]
+  }
+
+  # Dummy types for relationships that might not be fully implemented yet
+  type Bid {
+    id: ID!
+    amount: Float!
+    freelancer: Freelancer!
+
   }
 
   type Review {
     id: ID!
     rating: Int!
     comment: String!
+
     reviewer: User! # User who wrote the review
     reviewee: User! # User who is being reviewed
     project: Project!
     createdAt: DateTime!
+
   }
 
   type SubscriptionTier {
@@ -117,6 +193,7 @@ export const typeDefs = gql`
     activeProjects: Int!
     completedProjects: Int!
   }
+
 
   type Achievement {
     id: ID!
@@ -138,6 +215,19 @@ export const typeDefs = gql`
   # =================================
   # INPUT TYPES
   # =================================
+
+
+  type Category {
+    id: ID!
+    name: String!
+  }
+
+  type ProjectStats {
+    activeProjects: Int!
+    completedProjects: Int!
+  }
+
+  # Input Types
 
   input RegisterInput {
     email: String!
@@ -169,12 +259,27 @@ export const typeDefs = gql`
   }
 
   input UpdateProfileInput {
+
+  input CreateFreelancerInput {
+    name: String!
+    email: String!
+    skills: [String!]!
+    experience: Int!
+    bio: String!
+    hourlyRate: Float!
+    location: String
+    portfolio: String
+  }
+
+  input UpdateFreelancerInput {
+
     name: String
     skills: [String!]
     experience: Int
     bio: String
     hourlyRate: Float
     location: String
+
     portfolio: [String!]
   }
 
@@ -192,6 +297,41 @@ export const typeDefs = gql`
     myFavorites: FavoritesPayload!
   }
 
+
+    portfolio: String
+  }
+
+  # Queries
+  type Query {
+    # Health check
+    health: String!
+
+    # User
+    me: User
+    myProjectStats: ProjectStats
+
+    # Conversations & Chat
+    conversations: [Conversation!]
+    conversation(id: ID!): Conversation
+
+    # Projects
+    projects: [Project!]
+    project(id: ID!): Project
+
+    # Lenta
+    lenta: [Project!]
+
+    # Subscriptions
+    subscriptionTiers: [SubscriptionTier!]
+
+    # Freelancers
+    freelancers: [Freelancer!]
+    freelancer(id: ID!): Freelancer
+    recommendFreelancers(projectId: ID!): [Freelancer!]
+  }
+
+  # Mutations
+
   type Mutation {
     # Auth
     register(input: RegisterInput!): AuthPayload!
@@ -199,21 +339,42 @@ export const typeDefs = gql`
 
     # User
     updateUserRole(role: UserRole!): User!
+
     updateProfile(input: UpdateProfileInput!): User!
 
     # Favorites
     addToFavorites(itemId: ID!, type: FavoriteType!): User!
     removeFromFavorites(itemId: ID!, type: FavoriteType!): User!
 
+
+    # Chat
+    sendMessage(message: String!, conversationId: ID): Message!
+    deleteConversation(id: ID!): Boolean
+
+
     # Projects
     createProject(input: CreateProjectInput!): Project!
     updateProject(id: ID!, input: UpdateProjectInput!): Project!
     deleteProject(id: ID!): Boolean!
+
 
     # Reviews
     submitReview(projectId: ID!, rating: Int!, comment: String!): Review!
 
     # Subscriptions
     createSubscriptionCheckoutSession(tier: String!): String!
+
+    updateProjectPortfolioPermission(projectId: ID!, canShowInPortfolio: Boolean!): Project!
+    submitReview(freelancerId: ID!, projectId: ID!, rating: Int!, comment: String!): Review!
+
+    # Subscriptions
+    changeSubscription(tier: String!): User!
+    createSubscriptionCheckoutSession(tier: String!): String!
+
+    # Freelancers
+    createFreelancer(input: CreateFreelancerInput!): Freelancer!
+    updateFreelancer(id: ID!, input: UpdateFreelancerInput!): Freelancer!
+    deleteFreelancer(id: ID!): Boolean!
+
   }
 `;

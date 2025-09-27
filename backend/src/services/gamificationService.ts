@@ -4,7 +4,9 @@ import { PrismaClient, User } from '@prisma/client';
 export enum XpEvent {
   COMPLETE_PROJECT = 10,
   SUBMIT_REVIEW = 3,
+
   RECEIVE_GOOD_REVIEW = 5, // For freelancers who get a good review (e.g., 4+ stars)
+
   COMPLETE_TUTORIAL = 5, // Placeholder for when tutorials exist
   DAILY_LOGIN = 2,
   PUBLISH_PORTFOLIO_ITEM = 1,
