@@ -1,0 +1,213 @@
+// datasource db defines the database connection details.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// generator client specifies that Prisma Client should be generated.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =================================
+// ENUMS
+// =================================
+
+enum UserRole {
+  CLIENT
+  FREELANCER
+}
+
+enum ProjectStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  COMPLETED
+  CANCELLED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum TransactionType {
+  SUBSCRIPTION
+  PROJECT_PAYMENT
+  WITHDRAWAL
+}
+
+enum Role {
+  user
+  assistant
+}
+
+// =================================
+// MODELS
+// =================================
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  name                String?
+  password            String
+  role                UserRole  @default(CLIENT)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Gamification Fields
+  xp                  Int       @default(0)
+  level               String    @default("Junior")
+  tokens              Int       @default(0)
+  achievements        UserAchievement[]
+
+  // Subscription Fields
+  subscriptionId      String?
+  subscription        SubscriptionTier? @relation(fields: [subscriptionId], references: [id])
+
+  // Freelancer-specific fields (optional)
+  skills              String[]
+  experience          Int?
+  bio                 String?
+  hourlyRate          Float?
+  location            String?
+  portfolio           String[]
+
+  // Relations
+  projects            Project[] // Projects owned by this user (as a client)
+  bids                Bid[]     // Bids made by this user (as a freelancer)
+  reviewsGiven        Review[]  @relation("ReviewsGiven")
+  reviewsReceived     Review[]  @relation("ReviewsReceived")
+  transactions        Transaction[]
+  conversations       Conversation[]
+
+  // Favorites
+  favoriteProjects    Project[] @relation("FavoriteProjects")
+  favoriteFreelancers User[]    @relation("UserFavorites")
+  favoritedBy         User[]    @relation("UserFavorites")
+}
+
+model Project {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String
+  budget              Float
+  deadline            DateTime
+  status              ProjectStatus @default(OPEN)
+  canShowInPortfolio  Boolean       @default(false)
+  skills              String[]
+
+  ownerId             String
+  owner               User          @relation(fields: [ownerId], references: [id])
+
+  categoryId          String?
+  category            Category?     @relation(fields: [categoryId], references: [id])
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Relations
+  bids                Bid[]
+  review              Review?
+  favoritedBy         User[]        @relation("FavoriteProjects")
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  projects Project[]
+}
+
+model Bid {
+  id          String   @id @default(cuid())
+  amount      Float
+  proposal    String
+
+  userId      String   // ID of the user with FREELANCER role
+  user        User     @relation(fields: [userId], references: [id])
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  rating       Int
+  comment      String
+
+  reviewerId   String   // User who wrote the review
+  reviewer     User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+
+  revieweeId   String   // User who is being reviewed
+  reviewee     User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+
+  projectId    String   @unique // A project can only have one review
+  project      Project  @relation(fields: [projectId], references: [id])
+
+  createdAt    DateTime @default(now())
+}
+
+model SubscriptionTier {
+  id                 String   @id @default(cuid())
+  name               String   @unique
+  maxProjects        Int
+  maxResponses       Int
+  maxPortfolioItems  Int
+  chatMessagesPerDay Int
+  users              User[]
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  userId        String
+  achievementId String
+  user          User          @relation(fields: [userId], references: [id])
+  achievement   Achievement   @relation(fields: [achievementId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@id([userId, achievementId])
+}
+
+model Transaction {
+  id                  String            @id @default(cuid())
+  amount              Float
+  status              TransactionStatus
+  type                TransactionType
+  currency            String            @default("USD")
+  stripePaymentIntentId String?           @unique
+
+  userId              String
+  user                User              @relation(fields: [userId], references: [id])
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  title     String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  content        String
+  role           Role
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+}
