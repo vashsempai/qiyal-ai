@@ -3,12 +3,10 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT FROM pg_type WHERE typname = 'participant_role') THEN
     CREATE TYPE participant_role AS ENUM ('member','admin','owner');
   END IF;
-END$$;
-
+END; $$;
 CREATE TYPE conversation_type AS ENUM('direct', 'group', 'project');
 CREATE TYPE message_type AS ENUM('text', 'file', 'image', 'video', 'system', 'call');
 CREATE TYPE message_status AS ENUM('sent', 'delivered', 'read');
-
 -- Conversations Table
 CREATE TABLE conversations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -24,7 +22,6 @@ CREATE TABLE conversations (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- Conversation Participants Table
 CREATE TABLE conversation_participants (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -36,7 +33,6 @@ CREATE TABLE conversation_participants (
   is_muted BOOLEAN DEFAULT false,
   UNIQUE(conversation_id, user_id)
 );
-
 -- Messages Table
 CREATE TABLE messages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -57,7 +53,6 @@ CREATE TABLE messages (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP
 );
-
 -- Message Reads Table
 CREATE TABLE message_reads (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -66,7 +61,6 @@ CREATE TABLE message_reads (
   read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(message_id, user_id)
 );
-
 -- Indexes for Chat Tables
 CREATE INDEX idx_conversations_created_by ON conversations(created_by);
 CREATE INDEX idx_conversations_project ON conversations(project_id);
