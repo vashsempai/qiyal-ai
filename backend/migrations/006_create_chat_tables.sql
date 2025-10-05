@@ -4,7 +4,7 @@ BEGIN
   IF NOT EXISTS (SELECT FROM pg_type WHERE typname = 'participant_role') THEN
     CREATE TYPE participant_role AS ENUM ('member','admin','owner');
   END IF;
-END;
+END
 $$;
 CREATE TYPE conversation_type AS ENUM('direct', 'group', 'project');
 CREATE TYPE message_type AS ENUM('text', 'file', 'image', 'video', 'system', 'call');
