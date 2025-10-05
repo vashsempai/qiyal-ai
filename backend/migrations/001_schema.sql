@@ -61,6 +61,7 @@ CREATE TABLE users (
     -- Subscription & Verification
     subscription_plan user_subscription_plan DEFAULT 'free',
     subscription_expires_at TIMESTAMP,
+    stripe_customer_id VARCHAR(255),
     is_verified BOOLEAN DEFAULT false,
     is_featured BOOLEAN DEFAULT false,
 

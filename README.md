@@ -1,254 +1,154 @@
-# 🚀 Qiyal.ai - Полная сборка
+# Qiyal.ai - AI-Powered Freelance Platform
 
-Полная документация и файлы для запуска платформы Qiyal.ai с frontend, backend и социальной сетью.
+This repository contains the complete source code for the Qiyal.ai platform, including the backend and frontend applications.
 
-## 📁 Структура проекта
-
-```
-qiyal-ai-fullstack/
-├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── routes/
-│   │   ├── middleware/
-│   │   ├── services/
-│   │   └── utils/
-│   ├── migrations/
-│   ├── uploads/
-│   ├── .env.example
-│   ├── package.json
-│   └── server.js
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── .env.example
-│   ├── package.json
-│   └── vite.config.js
-├── docker-compose.yml
-└── README.md
-```
-
-## 🗄️ База данных PostgreSQL
-
-### Схема базы данных:
-- **users** - пользователи (фрилансеры, заказчики)
-- **projects** - проекты с заявками
-- **applications** - заявки на проекты
-- **posts** - блог-посты социальной сети
-- **comments** - комментарии к постам
-- **likes** - лайки постов
-- **follows** - подписки между пользователями
-- **conversations** - чаты и диалоги
-- **messages** - сообщения в чатах
-- **payments** - платежи через Kaspi.kz
-- **notifications** - уведомления
-
-## ⚙️ Backend API
-
-### Основные эндпоинты:
-
-**Аутентификация:**
-- `POST /api/auth/register` - регистрация
-- `POST /api/auth/login` - вход
-- `GET /api/auth/profile` - профиль пользователя
-
-**Проекты:**
-- `GET /api/projects` - список проектов
-- `POST /api/projects` - создание проекта
-- `POST /api/projects/:id/apply` - подача заявки
-
-**Социальная сеть:**
-- `GET /api/posts` - лента постов
-- `POST /api/posts` - создание поста
-- `POST /api/posts/:id/like` - лайк поста
-- `POST /api/posts/:id/comments` - комментарий
-
-**Чат:**
-- `GET /api/conversations` - список диалогов
-- `POST /api/messages` - отправка сообщения
-
-## 🎨 Frontend Features
-
-### Основные возможности:
-- ✅ Адаптивная вёрстка (mobile-first)
-- ✅ Светлая/тёмная тема
-- ✅ Переключение ролей (фрилансер/заказчик)
-- ✅ AI-ассистент с рекомендациями
-- ✅ Real-time чат (Socket.io)
-- ✅ Социальная лента с блогами
-- ✅ NDA-фильтр для постов
-- ✅ Система подписок и лайков
-- ✅ Поиск и фильтрация
-- ✅ Загрузка файлов
-- ✅ Email уведомления
-
-## 🔧 Технологический стек
+## ⚙️ Technology Stack
 
 ### Backend:
 - **Node.js** + Express.js
-- **PostgreSQL** с UUID
-- **Socket.io** для real-time
-- **JWT** аутентификация
-- **Multer** для файлов
-- **Nodemailer** для email
-- **OpenAI API** для AI
-- **Kaspi.kz API** для платежей
+- **PostgreSQL** with UUIDs
+- **Socket.io** for real-time features
+- **JWT** for authentication
+- **Stripe** for payment processing
+- **Google Gemini** for AI features
+- **Winston** for logging
 
 ### Frontend:
-- **Vanilla JavaScript** (SPA)
-- **CSS Grid/Flexbox**
-- **SVG иконки**
-- **localStorage** для офлайн
-- **Markdown** редактор
-- **Progressive Web App**
+- **Vanilla JavaScript** (Single Page Application)
+- **Vite** for frontend tooling
+- **CSS Grid/Flexbox** for layout
 
 ### DevOps:
 - **Docker** + docker-compose
-- **Jest** тестирование
-- **PM2** для production
-- **Nginx** reverse proxy
-- **SSL/HTTPS** через Let's Encrypt
+- **Jest** for testing
+- **Nginx** as a reverse proxy
 
-## 🚀 Быстрый запуск
+---
 
-### 1. Локальная разработка:
+## 🚀 Getting Started
 
-```bash
-# 1. Клонируйте репозиторий
-git clone <repo-url>
-cd qiyal-ai-fullstack
+### 1. Local Development (without Docker)
 
-# 2. Настройте PostgreSQL
-createdb qiyal_db
-psql -d qiyal_db -f backend/migrations/001_initial_schema.sql
+**Prerequisites:**
+- Node.js (v18 or later)
+- PostgreSQL
 
-# 3. Backend
-cd backend
-npm install
-cp .env.example .env  # Настройте переменные
-npm run dev
+**Setup:**
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd qiyal-ai-fullstack
+    ```
 
-# 4. Frontend (новый терминал)
-cd ../frontend
-npm install
-cp .env.example .env
-npm run dev
+2.  **Configure PostgreSQL:**
+    - Create a new database (e.g., `qiyal_db`).
+    - Run the migrations (see backend setup).
 
-# Откройте http://localhost:5173
-```
+3.  **Setup Backend:**
+    ```bash
+    cd backend
+    npm install
+    cp .env.example .env
+    # Edit .env with your configuration
+    npm run migrate
+    npm run dev
+    ```
 
-### 2. Docker запуск:
+4.  **Setup Frontend (in a new terminal):**
+    ```bash
+    cd frontend
+    npm install
+    cp .env.example .env
+    npm run dev
+    ```
 
-```bash
-# Запуск всех сервисов
-docker-compose up -d
+5.  Open your browser to `http://localhost:5173`.
 
-# Просмотр логов
-docker-compose logs -f
+### 2. Docker-Based Setup
 
-# Остановка
-docker-compose down
-```
+1.  **Configure Environment:**
+    - Copy `backend/.env.example` to `backend/.env` and fill in the variables.
+    - Ensure `DATABASE_URL` in `backend/.env` matches the PostgreSQL service in `docker-compose.yml`.
 
-## 🔐 Настройка переменных окружения
+2.  **Run Docker Compose:**
+    ```bash
+    docker-compose up -d --build
+    ```
 
-### Backend (.env):
+3.  **Run Migrations:**
+    ```bash
+    docker-compose exec backend npm run migrate
+    ```
+---
+
+## 🔐 Environment Variables
+
+### `backend/.env`
 ```env
 # Server
 PORT=5000
 NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+API_URL=http://localhost:5000
 
-# Database
-DB_HOST=localhost
-DB_NAME=qiyal_db
-DB_USER=postgres
-DB_PASSWORD=your_password
+# Database (must match docker-compose.yml if using Docker)
+DATABASE_URL=postgresql://qiyal_user:your_password@localhost:5432/qiyal_db
 
-# JWT
-JWT_SECRET=your-32-char-secret-key
-JWT_EXPIRES_IN=7d
+# JWT Authentication
+JWT_SECRET=a-very-strong-and-long-secret-key-for-jwt
+JWT_REFRESH_SECRET=another-very-strong-secret-for-refresh
 
-# OpenAI
-OPENAI_API_KEY=sk-your-key
+# Stripe Payment Gateway
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Email
-SMTP_USER=noreply@yourdomain.com
-SMTP_PASS=your-app-password
-
-# Kaspi Payment
-KASPI_MERCHANT_ID=your-id
-KASPI_SECRET_KEY=your-key
+# AI Service (Google Gemini)
+GEMINI_API_KEY=your-gemini-api-key
 ```
 
-### Frontend (.env):
+### `frontend/.env`
 ```env
 VITE_API_URL=http://localhost:5000/api
 VITE_SOCKET_URL=http://localhost:5000
 ```
 
-## 📊 Тестирование
+---
 
-```bash
-# Backend тесты
-cd backend
-npm test
-npm run test:watch
+## 📊 Testing
 
-# Coverage отчёт
-npm run test -- --coverage
-```
+1.  **Run All Tests:**
+    From the `backend/` directory:
+    ```bash
+    npm test
+    ```
 
-## 🌐 Деплой в production
+2.  **Testing Stripe Webhooks Locally:**
+    Stripe requires a public endpoint for webhooks, so you need a tool to forward requests to your local server.
 
-### AWS EC2 + RDS:
-1. Создайте EC2 инстанс Ubuntu 22.04
-2. Настройте RDS PostgreSQL
-3. Установите Node.js, PM2, Nginx
-4. Настройте SSL через Certbot
-5. Деплой через GitHub Actions
-
-### DigitalOcean App Platform:
-1. Подключите GitHub репозиторий
-2. Настройте managed PostgreSQL
-3. Добавьте переменные окружения
-4. Автоматический деплой при push
-
-### Docker на любом VPS:
-1. `docker-compose -f docker-compose.prod.yml up -d`
-2. Настройте reverse proxy (Traefik/Nginx)
-3. SSL сертификаты
-
-## 🔒 Безопасность
-
-- ✅ Helmet для HTTP headers
-- ✅ Rate limiting (100 req/15min)
-- ✅ XSS protection
-- ✅ SQL injection protection
-- ✅ JWT с коротким TTL
-- ✅ CORS настроен строго
-- ✅ File upload validation
-- ✅ NDA content filtering
-
-## 📈 Мониторинг
-
-- **PM2** для процессов
-- **Winston** для логирования
-- **PostgreSQL** метрики
-- **Sentry.io** для ошибок
-- **UptimeRobot** для доступности
-
-## 🔧 API документация
-
-Полная OpenAPI спецификация доступна на `/api/docs` в development режиме.
-
-## 📞 Поддержка
-
-- GitHub Issues для багов
-- Telegram: @qiyal_support
-- Email: support@qiyal.ai
+    - **Install the Stripe CLI:** Follow the instructions on the [official Stripe website](https://stripe.com/docs/stripe-cli).
+    - **Log in:**
+      ```bash
+      stripe login
+      ```
+    - **Forward webhooks:**
+      Run this command to forward events to your local webhook endpoint. The backend must be running.
+      ```bash
+      stripe listen --forward-to localhost:5000/api/payments/webhook/stripe
+      ```
+    - The CLI will provide you with a new webhook secret (e.g., `whsec_...`). **Use this secret** in your `backend/.env` file for local testing.
 
 ---
 
-**Qiyal.ai** - современная AI-powered платформа для фрилансеров и заказчиков в Казахстане 🇰🇿
+## 🔒 Security
 
-Версия: 1.0.0 | Дата: Октябрь 2025
+- ✅ **Helmet** for securing HTTP headers.
+- ✅ **Rate limiting** on sensitive endpoints.
+- ✅ **CORS** configured to restrict access.
+- ✅ **Stripe webhook signature verification**.
+- ✅ **SQL injection** protection via parameterized queries.
+- ✅ **XSS protection** through proper frontend handling of data.
+
+## 📖 API Documentation
+
+A full OpenAPI (Swagger) specification can be found in `backend/docs/openapi.yml`. When the backend is running in development mode, interactive documentation is available at `/api/docs`.
