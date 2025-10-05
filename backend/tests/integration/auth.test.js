@@ -5,6 +5,14 @@ import { db } from '../../src/utils/database.js';
 import bcrypt from 'bcryptjs';
 
 // --- Mocking Libraries ---
+jest.mock('@sentry/node', () => ({
+  init: jest.fn(),
+  Handlers: {
+    requestHandler: () => (req, res, next) => next(),
+    errorHandler: () => (err, req, res, next) => next(err),
+  },
+}));
+
 jest.mock('../../src/utils/database.js', () => ({
   db: {
     query: jest.fn(),

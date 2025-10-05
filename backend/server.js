@@ -9,6 +9,7 @@ import errorHandler from './src/middleware/errorHandler.js';
 import logger from './src/utils/logger.js';
 import { Server } from 'socket.io';
 import { ChatService } from './src/services/chat.service.js';
+import * as Sentry from '@sentry/node';
 
 dotenv.config();
 
@@ -53,8 +54,34 @@ io.on('connection', (socket) => {
   });
 });
 
+// Sentry request handler must be the first middleware on the app
+app.use(Sentry.Handlers.requestHandler());
+
 // Middleware setup
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    hsts: {
+      maxAge: 31536000, // 1 year in seconds
+      includeSubDomains: true,
+      preload: true,
+    },
+    frameguard: {
+      action: 'deny',
+    },
+  })
+);
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
@@ -82,8 +109,9 @@ const morganMiddleware = morgan(
 
 app.use(morganMiddleware);
 
-// Routes
-app.use('/api', mainRouter);
+// Apply the general API rate limiter to all API routes
+import { apiRateLimit } from './src/middleware/advancedRateLimit.js';
+app.use('/api', apiRateLimit, mainRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -97,6 +125,9 @@ app.use('*', (req, res) => {
     message: 'Resource not found'
   });
 });
+
+// Sentry error handler must be before any other error middleware and after all controllers
+app.use(Sentry.Handlers.errorHandler());
 
 // Error handler
 app.use(errorHandler);

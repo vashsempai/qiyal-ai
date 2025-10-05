@@ -1,0 +1,80 @@
+name: Qiyal.ai Backend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: qiyal_test_db
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        # Healthcheck to ensure postgres is ready before steps start
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm install
+        working-directory: ./backend
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/qiyal_test_db
+        run: npm run migrate
+        working-directory: ./backend
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/qiyal_test_db
+          STRIPE_SECRET_KEY: sk_test_dummy
+        run: npm test
+        working-directory: ./backend
+
+  deploy:
+    name: Deploy to Production
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Placeholder for deployment
+        run: echo "Deployment step would be here..."
+        # Example:
+        # - name: Deploy to server
+        #   uses: appleboy/ssh-action@master
+        #   with:
+        #     host: ${{ secrets.PROD_HOST }}
+        #     username: ${{ secrets.PROD_USER }}
+        #     key: ${{ secrets.PROD_SSH_KEY }}
+        #     script: |
+        #       cd /path/to/app
+        #       git pull
+        #       docker-compose up -d --build
+        #       docker-compose exec backend npm run migrate

@@ -3,6 +3,15 @@ import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@je
 import { server } from '../../server.js';
 import { db } from '../../src/utils/database.js';
 
+// Mock Sentry to prevent initialization errors in tests
+jest.mock('@sentry/node', () => ({
+  init: jest.fn(),
+  Handlers: {
+    requestHandler: () => (req, res, next) => next(),
+    errorHandler: () => (err, req, res, next) => next(err),
+  },
+}));
+
 // Mock the database to prevent actual DB calls
 jest.mock('../../src/utils/database.js');
 

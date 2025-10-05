@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ChatController } from '../controllers/chat.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
+import { chatRateLimit } from '../middleware/advancedRateLimit.js';
 
 const router = Router();
 
@@ -26,6 +27,6 @@ router.get('/conversations/:conversationId/messages', ChatController.getMessages
  * @desc    Send a new message in a conversation
  * @access  Private
  */
-router.post('/conversations/:conversationId/messages', ChatController.sendMessage);
+router.post('/conversations/:conversationId/messages', chatRateLimit, ChatController.sendMessage);
 
 export default router;

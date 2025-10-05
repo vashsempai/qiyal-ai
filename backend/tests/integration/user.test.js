@@ -3,6 +3,14 @@ import { jest, describe, it, expect, beforeEach, afterAll } from '@jest/globals'
 import { app, server } from '../../server.js';
 
 // --- Mocking Libraries ---
+jest.mock('@sentry/node', () => ({
+  init: jest.fn(),
+  Handlers: {
+    requestHandler: () => (req, res, next) => next(),
+    errorHandler: () => (err, req, res, next) => next(err),
+  },
+}));
+
 const mockQuery = jest.fn();
 jest.mock('pg', () => ({
   Pool: jest.fn(() => ({
