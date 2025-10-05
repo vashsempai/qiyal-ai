@@ -1,7 +1,6 @@
 import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
 import { app, server } from '../../server.js';
-import bcrypt from 'bcryptjs';
 
 // --- Mocking Libraries ---
 jest.mock('@sentry/node', () => ({
@@ -23,12 +22,23 @@ jest.mock('pg', () => ({
 }));
 
 // Mock the bcryptjs library directly. The `import` will now receive this object.
+const mockBcryptCompare = jest.fn();
+const mockBcryptGenSalt = jest.fn();
+const mockBcryptHash = jest.fn();
+
 jest.mock('bcryptjs', () => ({
-  compare: jest.fn(),
-  genSalt: jest.fn(),
-  hash: jest.fn(),
+  __esModule: true,
+  default: {
+    compare: mockBcryptCompare,
+    genSalt: mockBcryptGenSalt,
+    hash: mockBcryptHash,
+  },
+  compare: mockBcryptCompare,
+  genSalt: mockBcryptGenSalt,
+  hash: mockBcryptHash,
 }));
 
+import bcrypt from 'bcryptjs';
 
 describe('Social API (with pg mocked)', () => {
   let authToken;
@@ -41,17 +51,19 @@ describe('Social API (with pg mocked)', () => {
   beforeAll(async () => {
     // Perform login once to get a token for all tests in this suite
     mockQuery.mockResolvedValueOnce({ rows: [mockUser] });
-    bcrypt.compare.mockResolvedValue(true);
+    mockBcryptCompare.mockResolvedValue(true);
+
     const loginResponse = await request(app)
       .post('/api/auth/login')
       .send({ email: 'test@example.com', password: 'password' });
+
     authToken = loginResponse.body.data.tokens.accessToken;
   });
 
   beforeEach(() => {
     // Reset mocks before each test
     mockQuery.mockReset();
-    bcrypt.compare.mockClear();
+    mockBcryptCompare.mockClear();
   });
 
   afterAll(() => {
