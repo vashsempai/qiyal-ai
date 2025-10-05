@@ -63,13 +63,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Logging
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined', {
-    stream: { write: (message) => logger.info(message.trim()) }
-  }));
-}
+// Setup morgan to use the Winston logger stream
+const stream = {
+  write: (message) => {
+    logger.http(message.trim());
+  },
+};
+
+// Skip logging in the test environment
+const skip = () => process.env.NODE_ENV === 'test';
+
+// Build the morgan middleware
+const morganMiddleware = morgan(
+  // Use 'dev' format for development, 'combined' for production
+  process.env.NODE_ENV === 'development' ? 'dev' : 'combined',
+  { stream, skip }
+);
+
+app.use(morganMiddleware);
 
 // Routes
 app.use('/api', mainRouter);

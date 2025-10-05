@@ -4,26 +4,21 @@ import { app, server } from '../../server.js';
 import bcrypt from 'bcryptjs';
 
 // --- Mocking Libraries ---
-// Mock the 'pg' library to control database interactions
 const mockQuery = jest.fn();
-jest.mock('pg', () => {
-  const mockPool = {
+jest.mock('pg', () => ({
+  Pool: jest.fn(() => ({
     query: mockQuery,
     connect: jest.fn().mockReturnThis(),
     on: jest.fn(),
     end: jest.fn(),
-  };
-  return { Pool: jest.fn(() => mockPool) };
-});
+  })),
+}));
 
-// Mock the 'bcryptjs' library to control password comparison
+// Mock the bcryptjs library directly. The `import` will now receive this object.
 jest.mock('bcryptjs', () => ({
-  __esModule: true,
-  default: {
-    compare: jest.fn(),
-    genSalt: jest.fn(),
-    hash: jest.fn(),
-  },
+  compare: jest.fn(),
+  genSalt: jest.fn(),
+  hash: jest.fn(),
 }));
 
 

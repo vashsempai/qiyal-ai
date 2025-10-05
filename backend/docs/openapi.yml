@@ -1,0 +1,119 @@
+openapi: 3.0.0
+info:
+  title: Qiyal.ai API
+  description: The official API for the Qiyal.ai freelance platform, providing services for user management, projects, payments, and social features.
+  version: 1.0.0
+servers:
+  - url: /api
+    description: Main API gateway
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, username, password, firstName, lastName]
+              properties:
+                email:
+                  type: string
+                  format: email
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully. Returns user object and JWT tokens.
+        '500':
+          description: Server error, e.g., if user already exists.
+
+  /auth/login:
+    post:
+      summary: Authenticate a user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful. Returns user object and JWT tokens.
+        '401':
+          description: Invalid credentials.
+
+  /users/{id}:
+    get:
+      summary: Get a user's public profile
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response with user data.
+        '404':
+          description: User not found.
+
+  /posts:
+    post:
+      summary: Create a new post
+      tags:
+        - Social
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: The main text content of the post.
+                visibility:
+                  type: string
+                  enum: [public, followers, private]
+                  default: public
+      responses:
+        '201':
+          description: Post created successfully.
+        '401':
+          description: Unauthorized.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Enter the 'Bearer' [space] and then your token. Example: 'Bearer 12345abcdef'"

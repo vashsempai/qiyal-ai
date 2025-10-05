@@ -29,7 +29,8 @@
     "socket.io": "^4.6.1",
     "stripe": "^19.1.0",
     "uuid": "^9.0.1",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "winston": "^3.18.3"
   },
   "devDependencies": {
     "jest": "^29.7.0",
