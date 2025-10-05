@@ -49,6 +49,17 @@ export const Payment = {
   },
 
   /**
+   * Finds a payment by its gateway transaction ID.
+   * @param {string} transactionId - The ID from the payment gateway.
+   * @returns {Promise<object|undefined>} The payment object.
+   */
+  async findByGatewayTransactionId(transactionId) {
+    const query = 'SELECT * FROM payments WHERE gateway_transaction_id = $1;';
+    const { rows } = await db.query(query, [transactionId]);
+    return rows[0];
+  },
+
+  /**
    * Updates a payment record.
    * @param {string} id - The ID of the payment to update.
    * @param {object} updates - The fields to update.

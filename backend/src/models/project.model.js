@@ -19,17 +19,22 @@ export const Project = {
       budgetType,
       budgetMin,
       budgetMax,
-      // Add other relevant fields from the schema
+      ai_generated_summary,
+      ai_suggested_skills,
     } = projectData;
 
     const query = `
       INSERT INTO projects (
-        client_id, category_id, title, slug, description, budget_type, budget_min, budget_max
+        client_id, category_id, title, slug, description, budget_type, budget_min, budget_max,
+        ai_generated_summary, ai_suggested_skills
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *;
     `;
-    const params = [clientId, categoryId, title, slug, description, budgetType, budgetMin, budgetMax];
+    const params = [
+      clientId, categoryId, title, slug, description, budgetType, budgetMin, budgetMax,
+      ai_generated_summary, ai_suggested_skills
+    ];
     const { rows } = await db.query(query, params);
     return rows[0];
   },

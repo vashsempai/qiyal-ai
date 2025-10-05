@@ -1,57 +1,46 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// This should be loaded from environment variables in a real application
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const GeminiService = {
-  /**
-   * Enhances a project description using the Gemini API.
-   * This is a placeholder for the full implementation.
-   * @param {object} input - The project data.
-   * @returns {Promise<object>} The AI-enhanced project data.
-   */
-  async enhanceProjectDescription(input) {
+export const GeminiService = {
+  async generateProjectSummary(projectDescription) {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const prompt = `Summarize this project description in 2-3 sentences, highlighting key requirements and skills needed: ${projectDescription}`;
+
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  },
+
+  async suggestSkills(projectDescription) {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const prompt = `Based on this project description, suggest 5-8 relevant skills/technologies as a comma-separated list: ${projectDescription}`;
+
+    const result = await model.generateContent(prompt);
+    return result.response.text().split(',').map(skill => skill.trim());
+  },
+
+  async generateCoverLetter(userProfile, projectDescription) {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const prompt = `Write a professional cover letter for this freelancer profile: ${JSON.stringify(userProfile)} applying to this project: ${projectDescription}`;
+
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  },
+
+  async moderateContent(content) {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const prompt = `Analyze this content for inappropriate material, spam, or violations. Return JSON with {isAppropriate: boolean, reason: string}: ${content}`;
+
+    const result = await model.generateContent(prompt);
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-      const prompt = `
-        You are an expert freelance project consultant. Enhance this project description:
-
-        Title: ${input.title}
-        Basic Description: ${input.description}
-        Category: ${input.category}
-        Budget: ${input.budget}
-
-        Provide:
-        1. An enhanced, detailed description (200-400 words).
-        2. A list of required skills (as a JSON array of strings).
-        3. An estimated timeline (e.g., "2-4 weeks").
-        4. A project complexity rating (1-5 scale).
-        5. Suggested milestones for the project.
-        6. Market rate recommendations based on the description.
-
-        Format the entire output as a single, well-formed JSON object.
-      `;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      return JSON.parse(text);
+      // The Gemini API may return the JSON string with markdown backticks.
+      const cleanedText = result.response.text().replace(/```json|```/g, '').trim();
+      return JSON.parse(cleanedText);
     } catch (error) {
-      console.error('Error calling Gemini API:', error);
-      throw new Error('Failed to enhance project description with AI.');
+      console.error("Failed to parse Gemini moderation response:", error);
+      return { isAppropriate: true, reason: "Unable to analyze" };
     }
-  },
-
-  // Placeholder for future AI-powered features
-  async matchFreelancers(project, freelancers) {
-    console.log('AI matching for freelancers is not yet implemented.');
-    return [];
-  },
-
-  async analyzeApplicationQuality(application, project) {
-    console.log('AI application analysis is not yet implemented.');
-    return {};
   }
 };
 
-module.exports = GeminiService;
+export default GeminiService;

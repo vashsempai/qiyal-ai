@@ -1,162 +1,126 @@
 import { Payment } from '../models/payment.model.js';
 import { Transaction } from '../models/transaction.model.js';
 import { UserBalance } from '../models/user-balance.model.js';
-import { KaspiService } from './kaspi.service.js';
+import { User } from '../models/user.model.js';
+import { StripeService } from './stripe.service.js';
 
 export const PaymentService = {
-  async createPayment({
-    userId,
-    amount,
-    currency = 'KZT',
-    paymentMethod,
-    description,
-    contractId,
-    metadata = {}
-  }) {
-    // Calculate fees
-    const platformFee = this.calculatePlatformFee(amount, paymentMethod);
-    const gatewayFee = this.calculateGatewayFee(amount, paymentMethod);
-    const netAmount = amount - platformFee - gatewayFee;
-
-    // Create payment record
-    const payment = await Payment.create({
-      userId,
-      contractId,
-      amount,
-      currency,
-      paymentMethod,
-      platformFee,
-      gatewayFee,
-      netAmount,
-      description,
-      metadata,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-    });
-
-    // Create gateway transaction
-    let gatewayResponse;
-    switch (paymentMethod) {
-      case 'kaspi':
-        gatewayResponse = await KaspiService.createPayment({
-          amount,
-          currency,
-          orderId: payment.id,
-          description,
-          callbackUrl: `${process.env.API_URL}/api/payments/webhook/kaspi`,
-          returnUrl: `${process.env.FRONTEND_URL}/payments/success`
-        });
-        break;
-
-      case 'balance':
-        // Process balance payment immediately
-        return await this.processBalancePayment(payment);
-
-      default:
-        throw new Error(`Payment method ${paymentMethod} not supported`);
+  /**
+   * Creates a payment intent with Stripe for a user.
+   * If the user is not yet a Stripe customer, one is created first.
+   */
+  async createPayment({ userId, amount, currency = 'usd', description, metadata = {} }) {
+    let user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found.');
     }
 
-    // Update payment with gateway response
-    if (gatewayResponse) {
+    // Create a Stripe customer if one doesn't exist
+    if (!user.stripe_customer_id) {
+      const customer = await StripeService.createCustomer({
+        email: user.email,
+        name: `${user.first_name} ${user.last_name}`,
+        metadata: { userId },
+      });
+      user = await User.update(userId, { stripe_customer_id: customer.id });
+    }
+
+    // Create a payment record in our database
+    const payment = await Payment.create({
+      userId,
+      amount,
+      currency,
+      paymentMethod: 'stripe',
+      status: 'pending',
+      description,
+      metadata,
+    });
+
+    // Create a Payment Intent with Stripe
+    const paymentIntent = await StripeService.createPaymentIntent({
+      amount,
+      currency,
+      customerId: user.stripe_customer_id,
+      description,
+      metadata: { ...metadata, paymentId: payment.id },
+    });
+
+    // Update our payment record with the Stripe transaction ID
+    await Payment.update(payment.id, {
+      gateway_transaction_id: paymentIntent.id,
+      status: 'processing',
+    });
+
+    return {
+      clientSecret: paymentIntent.clientSecret,
+      paymentId: payment.id,
+    };
+  },
+
+  /**
+   * Handles webhook events from Stripe.
+   */
+  async handleStripeWebhook(payload, signature) {
+    const event = await StripeService.handleWebhook(payload, signature);
+    const paymentIntent = event.data;
+
+    const payment = await Payment.findByGatewayTransactionId(paymentIntent.id);
+    if (!payment) {
+      throw new Error(`Payment with Stripe ID ${paymentIntent.id} not found.`);
+    }
+
+    if (event.type === 'payment_completed') {
+      await this.processSuccessfulPayment(payment, paymentIntent);
+    } else if (event.type === 'payment_failed') {
       await Payment.update(payment.id, {
-        gatewayTransactionId: gatewayResponse.transactionId,
-        gatewayResponse,
-        status: 'processing'
+        status: 'failed',
+        gateway_callback_data: paymentIntent,
       });
     }
 
-    return { ...payment, gatewayResponse };
+    return { status: 'success' };
   },
 
-  async processBalancePayment(payment) {
-    const userBalance = await UserBalance.findByUserId(payment.user_id);
-
-    if (!userBalance || userBalance.available_balance < payment.amount) {
-      await Payment.update(payment.id, { status: 'failed' });
-      throw new Error('Insufficient balance');
+  /**
+   * Processes a successful payment by updating balances and creating transactions.
+   */
+  async processSuccessfulPayment(payment, paymentIntent) {
+    if (payment.status === 'completed') {
+      console.warn(`Payment ${payment.id} has already been processed.`);
+      return;
     }
 
-    // Deduct from balance
-    await UserBalance.deduct(payment.user_id, payment.amount);
+    const platformFee = this.calculateStripeFee(paymentIntent.amount);
+    const netAmount = (paymentIntent.amount / 100) - platformFee;
 
-    // Create transaction
+    await Payment.update(payment.id, {
+      status: 'completed',
+      processed_at: new Date(),
+      platform_fee: platformFee,
+      net_amount: netAmount,
+      gateway_callback_data: paymentIntent,
+    });
+
+    // For now, we assume the payment is a deposit to the user's balance
+    await UserBalance.add(payment.user_id, netAmount);
+
     await Transaction.create({
       userId: payment.user_id,
       paymentId: payment.id,
-      type: 'payment',
-      amount: -payment.amount,
-      description: payment.description
+      type: 'deposit',
+      amount: netAmount,
+      currency: payment.currency,
+      description: `Deposit from Stripe payment: ${paymentIntent.id}`,
     });
-
-    // Mark payment as completed
-    await Payment.update(payment.id, {
-      status: 'completed',
-      processedAt: new Date()
-    });
-
-    return payment;
   },
 
-  async handleKaspiWebhook(webhookData) {
-    const { orderId, status, transactionId, amount } = webhookData;
-
-    const payment = await Payment.findById(orderId);
-    if (!payment) {
-      throw new Error('Payment not found');
-    }
-
-    // Update payment status based on webhook
-    let paymentStatus;
-    switch (status) {
-      case 'SUCCESS':
-        paymentStatus = 'completed';
-        // Add to user balance
-        await UserBalance.add(payment.user_id, payment.net_amount);
-        // Create transaction record
-        await Transaction.create({
-          userId: payment.user_id,
-          paymentId: payment.id,
-          type: 'deposit',
-          amount: payment.net_amount,
-          description: payment.description
-        });
-        break;
-
-      case 'FAILED':
-        paymentStatus = 'failed';
-        break;
-
-      default:
-        paymentStatus = 'processing';
-    }
-
-    await Payment.update(payment.id, {
-      status: paymentStatus,
-      gatewayCallbackData: webhookData,
-      processedAt: paymentStatus === 'completed' ? new Date() : null
-    });
-
-    // TODO: Send notification to user
-    // TODO: Update contract status if needed
-
-    return payment;
+  /**
+   * Calculates the Stripe fee (approximated as 2.9% + $0.30).
+   */
+  calculateStripeFee(amountInCents) {
+    const fee = (amountInCents * 0.029) + 30;
+    return Math.round(fee) / 100;
   },
-
-  calculatePlatformFee(amount, paymentMethod) {
-    const feeRate = parseFloat(process.env.PLATFORM_FEE_RATE) || 0.05; // 5%
-    return Math.round(amount * feeRate * 100) / 100;
-  },
-
-  calculateGatewayFee(amount, paymentMethod) {
-    const fees = {
-      kaspi: 0.025, // 2.5%
-      card: 0.03,   // 3%
-      bank_transfer: 0.01, // 1%
-      balance: 0    // No fee
-    };
-
-    const feeRate = fees[paymentMethod] || 0;
-    return Math.round(amount * feeRate * 100) / 100;
-  }
 };
 
 export default PaymentService;

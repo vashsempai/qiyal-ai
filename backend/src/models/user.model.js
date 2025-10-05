@@ -85,7 +85,8 @@ export const User = {
     const allowedUpdates = [
         'first_name', 'last_name', 'display_name', 'bio', 'avatar_url', 'cover_image_url',
         'country', 'city', 'timezone', 'language', 'currency', 'title', 'hourly_rate',
-        'availability_status', 'profile_visibility', 'show_earnings', 'show_location'
+        'availability_status', 'profile_visibility', 'show_earnings', 'show_location',
+        'stripe_customer_id'
     ];
 
     const finalUpdates = {};

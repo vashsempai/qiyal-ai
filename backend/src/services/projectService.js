@@ -1,16 +1,16 @@
 import { Project } from '../models/project.model.js';
 import { User } from '../models/user.model.js';
+import { GeminiService } from './gemini.service.js';
 
 /**
  * Service for handling project-related business logic.
  */
 export const ProjectService = {
   /**
-   * Creates a new project for a client.
+   * Creates a new project for a client, enhanced with AI-generated content.
    * @param {string} clientId - The ID of the client creating the project.
    * @param {object} projectData - The data for the new project.
    * @returns {Promise<object>} The newly created project object.
-   * @throws {Error} If the client does not exist or if data is invalid.
    */
   async createProject(clientId, projectData) {
     // Verify that the client exists
@@ -19,13 +19,21 @@ export const ProjectService = {
       throw new Error('Client not found.');
     }
 
-    // Add business logic here, e.g., generating a unique slug from the title
+    // Generate AI content
+    const [summary, skills] = await Promise.all([
+      GeminiService.generateProjectSummary(projectData.description),
+      GeminiService.suggestSkills(projectData.description),
+    ]);
+
+    // Generate a unique slug from the title
     const slug = projectData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     const newProject = await Project.create({
       ...projectData,
       clientId,
       slug,
+      ai_generated_summary: summary,
+      ai_suggested_skills: skills,
     });
 
     return newProject;
@@ -41,7 +49,6 @@ export const ProjectService = {
     if (!project) {
       return null;
     }
-    // Potentially enrich the project object with related data, e.g., client info
     return project;
   },
 
@@ -51,8 +58,7 @@ export const ProjectService = {
    * @returns {Promise<Array<object>>} A list of projects matching the criteria.
    */
   async findProjects(filters) {
-    // Here you could add more complex logic, like converting filter names or setting defaults
-    return Project.findAll(filters);
+    return Project.findAll({ filters });
   },
 
   /**
@@ -61,7 +67,6 @@ export const ProjectService = {
    * @param {object} updateData - The data to update.
    * @param {string} userId - The ID of the user attempting the update (for authorization).
    * @returns {Promise<object>} The updated project object.
-   * @throws {Error} If the project is not found or the user is not authorized.
    */
   async updateProject(projectId, updateData, userId) {
     const project = await Project.findById(projectId);
@@ -69,13 +74,11 @@ export const ProjectService = {
       throw new Error('Project not found.');
     }
 
-    // Authorization check: only the client who created the project can update it
     if (project.client_id !== userId) {
       throw new Error('You are not authorized to update this project.');
     }
 
-    const updatedProject = await Project.update(projectId, updateData);
-    return updatedProject;
+    return await Project.update(projectId, updateData);
   },
 };
 
