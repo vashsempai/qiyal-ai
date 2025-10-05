@@ -15,7 +15,6 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -55,7 +54,9 @@ io.on('connection', (socket) => {
 });
 
 // Sentry request handler must be the first middleware on the app
-app.use(Sentry.Handlers.requestHandler());
+if (process.env.NODE_ENV !== 'test') {
+  app.use(Sentry.Handlers.requestHandler());
+}
 
 // Middleware setup
 app.use(
@@ -82,10 +83,12 @@ app.use(
     },
   })
 );
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -127,7 +130,9 @@ app.use('*', (req, res) => {
 });
 
 // Sentry error handler must be before any other error middleware and after all controllers
-app.use(Sentry.Handlers.errorHandler());
+if (process.env.NODE_ENV !== 'test') {
+  app.use(Sentry.Handlers.errorHandler());
+}
 
 // Error handler
 app.use(errorHandler);
@@ -136,5 +141,4 @@ const PORT = process.env.PORT || 5000;
 
 // The server is started in index.js, not here.
 // This allows the app to be imported for testing without starting the server.
-
 export { app, server, io, PORT };
