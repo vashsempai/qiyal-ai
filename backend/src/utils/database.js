@@ -1,28 +1,47 @@
-const { Pool } = require('pg');
-require('dotenv').config();
+import pg from 'pg';
+import dotenv from 'dotenv';
+import path from 'path';
 
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+const { Pool } = pg;
+
+// Check if DATABASE_URL is provided
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is not set.');
+}
+
+// Create a new connection pool
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'qiyal_db',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionString: process.env.DATABASE_URL,
+  // Use SSL in production environments
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
+// Log when a client is connected
 pool.on('connect', () => {
   console.log('Database client connected');
 });
 
-pool.on('error', (err) => {
+// Log any errors on idle clients
+pool.on('error', (err, client) => {
   console.error('Unexpected error on idle database client', err);
   process.exit(-1);
 });
 
-module.exports = {
+/**
+ * A utility object for database interactions.
+ * It exports a query function to execute queries using the connection pool.
+ */
+export const db = {
+  /**
+   * Executes a SQL query against the database.
+   * @param {string} text - The SQL query string.
+   * @param {Array<any>} [params] - The parameters to pass to the query.
+   * @returns {Promise<QueryResult<any>>} The result of the query.
+   */
   query: (text, params) => pool.query(text, params),
-  getClient: () => pool.connect(),
-  pool,
 };
+
+export default db;

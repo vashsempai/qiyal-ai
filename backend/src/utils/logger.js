@@ -1,7 +1,8 @@
-// A simple placeholder for a logger utility.
-// In a real production app, this would be replaced with a robust library like Winston.
-
-const logger = {
+/**
+ * A simple placeholder for a logger utility.
+ * In a real production app, this would be replaced with a robust library like Winston.
+ */
+export const logger = {
   info: (message) => {
     console.log(`[INFO] ${new Date().toISOString()}: ${message}`);
   },
@@ -16,4 +17,4 @@ const logger = {
   },
 };
 
-module.exports = logger;
+export default logger;

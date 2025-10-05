@@ -1,16 +1,22 @@
-const express = require('express');
+import express from 'express';
+import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
+import projectRoutes from './project.routes.js';
+import skillRoutes from './skill.routes.js';
+import proposalRoutes from './proposal.routes.js';
+
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 
-// This will automatically register all route files in this directory.
-// It assumes the file name matches the base path (e.g., 'auth.routes.js' -> '/auth').
-fs.readdirSync(__dirname)
-  .filter(file => file.endsWith('.js') && file !== 'index.js')
-  .forEach(file => {
-    const route = require(path.join(__dirname, file));
-    const routeName = file.split('.')[0];
-    router.use(`/${routeName}`, route);
-  });
+// Health check endpoint
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'API is healthy' });
+});
 
-module.exports = router;
+// Mount all application routes
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/projects', projectRoutes);
+router.use('/skills', skillRoutes);
+router.use('/proposals', proposalRoutes);
+
+export default router;
