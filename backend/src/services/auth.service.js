@@ -1,10 +1,37 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { User } from '../models/user.model.js';
 
 /**
  * Service for handling authentication-related logic like password hashing and JWT management.
  */
 export const AuthService = {
+  /**
+   * Authenticates a user and returns their data along with JWTs.
+   * @param {string} email - The user's email.
+   * @param {string} password - The user's plain text password.
+   * @returns {Promise<{user: object, tokens: object}>}
+   * @throws {Error} If credentials are invalid.
+   */
+  async login(email, password) {
+    const user = await User.findByEmail(email);
+    if (!user) {
+      throw new Error('Invalid credentials.');
+    }
+
+    const isMatch = await this.comparePasswords(password, user.password_hash);
+    if (!isMatch) {
+      throw new Error('Invalid credentials.');
+    }
+
+    const tokens = this.generateTokens(user);
+
+    const userResponse = { ...user };
+    delete userResponse.password_hash;
+
+    return { user: userResponse, tokens };
+  },
+
   /**
    * Hashes a plain text password.
    * @param {string} password - The plain text password to hash.
