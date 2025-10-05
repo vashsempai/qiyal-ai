@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  backend:
+    command: npm run dev
+    volumes:
+      - ../backend:/workspaces/qiyal-ai-fullstack/backend:cached
+      - /workspaces/qiyal-ai-fullstack/backend/node_modules
+  frontend:
+    command: npm run dev
+    volumes:
+      - ../frontend:/workspaces/qiyal-ai-fullstack/frontend:cached
+      - /workspaces/qiyal-ai-fullstack/frontend/node_modules

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qiyal.ai - AI-powered платформа фрилансеров</title>
+    <meta name="description" content="Современная платформа для фрилансеров и заказчиков с ИИ-ассистентом, социальной сетью и блогами">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+    <!-- SVG Icons Sprite -->
+    <svg style="display: none;" width="0" height="0">
+        <defs>
+            <!-- Navigation Icons -->
+            <symbol id="icon-home" viewBox="0 0 24 24">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9,22 9,12 15,12 15,22"/>
+            </symbol>
+
+            <symbol id="icon-file-text" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10,9 9,9 8,9"/>
+            </symbol>
+
+            <symbol id="icon-users" viewBox="0 0 24 24">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </symbol>
+
+            <symbol id="icon-message-circle" viewBox="0 0 24 24">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+            </symbol>
+
+            <symbol id="icon-user" viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </symbol>
+
+            <!-- Theme Icons -->
+            <symbol id="icon-sun" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </symbol>
+
+            <symbol id="icon-moon" viewBox="0 0 24 24">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </symbol>
+
+            <!-- Other Icons -->
+            <symbol id="icon-bell" viewBox="0 0 24 24">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </symbol>
+
+            <symbol id="icon-search" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+            </symbol>
+
+            <symbol id="icon-heart" viewBox="0 0 24 24">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </symbol>
+
+            <symbol id="icon-bookmark" viewBox="0 0 24 24">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </symbol>
+
+            <symbol id="icon-star" viewBox="0 0 24 24">
+                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+            </symbol>
+
+            <symbol id="icon-eye" viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </symbol>
+
+            <!-- AI Robot Icon -->
+            <symbol id="icon-robot" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="10" rx="2" ry="2"/>
+                <circle cx="12" cy="5" r="2"/>
+                <path d="M12 7v4"/>
+                <line x1="8" y1="16" x2="8" y2="16"/>
+                <line x1="16" y1="16" x2="16" y2="16"/>
+            </symbol>
+
+            <!-- Action Icons -->
+            <symbol id="icon-send" viewBox="0 0 24 24">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22,2 15,21 11,13 3,9"/>
+            </symbol>
+
+            <symbol id="icon-x" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </symbol>
+
+            <symbol id="icon-menu" viewBox="0 0 24 24">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </symbol>
+
+            <!-- Category Icons -->
+            <symbol id="icon-monitor" viewBox="0 0 24 24">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+            </symbol>
+
+            <symbol id="icon-smartphone" viewBox="0 0 24 24">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </symbol>
+
+            <symbol id="icon-palette" viewBox="0 0 24 24">
+                <circle cx="13.5" cy="6.5" r=".5"/>
+                <circle cx="17.5" cy="10.5" r=".5"/>
+                <circle cx="8.5" cy="7.5" r=".5"/>
+                <circle cx="6.5" cy="12.5" r=".5"/>
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+            </symbol>
+
+            <symbol id="icon-trending-up" viewBox="0 0 24 24">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                <polyline points="17 6 23 6 23 12"/>
+            </symbol>
+
+            <symbol id="icon-edit" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </symbol>
+
+            <symbol id="icon-settings" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </symbol>
+
+            <!-- Blog Icons -->
+            <symbol id="icon-rss" viewBox="0 0 24 24">
+                <path d="M4 11a9 9 0 0 1 9 9"/>
+                <path d="M4 4a16 16 0 0 1 16 16"/>
+                <circle cx="5" cy="19" r="1"/>
+            </symbol>
+
+            <symbol id="icon-hash" viewBox="0 0 24 24">
+                <line x1="4" y1="9" x2="20" y2="9"/>
+                <line x1="4" y1="15" x2="20" y2="15"/>
+                <line x1="10" y1="3" x2="8" y2="21"/>
+                <line x1="16" y1="3" x2="14" y2="21"/>
+            </symbol>
+        </defs>
+    </svg>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header__content">
+                <!-- Logo -->
+                <div class="header__logo">
+                    <div class="logo">
+                        <svg class="logo__icon">
+                            <use href="#icon-robot"></use>
+                        </svg>
+                        <span class="logo__text">Qiyal.ai</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="nav nav--desktop">
+                    <a href="#" class="nav__link nav__link--active" data-page="home">
+                        <svg class="nav__icon">
+                            <use href="#icon-home"></use>
+                        </svg>
+                        <span>Главная</span>
+                    </a>
+                    <a href="#" class="nav__link" data-page="projects">
+                        <svg class="nav__icon">
+                            <use href="#icon-file-text"></use>
+                        </svg>
+                        <span>Проекты</span>
+                    </a>
+                    <a href="#" class="nav__link" data-page="talents">
+                        <svg class="nav__icon">
+                            <use href="#icon-users"></use>
+                        </svg>
+                        <span>Таланты</span>
+                    </a>
+                    <a href="#" class="nav__link" data-page="feed">
+                        <svg class="nav__icon">
+                            <use href="#icon-rss"></use>
+                        </svg>
+                        <span>Лента</span>
+                    </a>
+                    <a href="#" class="nav__link" data-page="chat">
+                        <svg class="nav__icon">
+                            <use href="#icon-message-circle"></use>
+                        </svg>
+                        <span>Чат</span>
+                    </a>
+                    <a href="#" class="nav__link" data-page="profile">
+                        <svg class="nav__icon">
+                            <use href="#icon-user"></use>
+                        </svg>
+                        <span>Профиль</span>
+                    </a>
+                </nav>
+
+                <!-- Header Controls -->
+                <div class="header__controls">
+                    <!-- Role Switcher -->
+                    <div class="role-switcher">
+                        <button class="role-switcher__btn role-switcher__btn--active" data-role="freelancer">
+                            Фрилансер
+                        </button>
+                        <button class="role-switcher__btn" data-role="client">
+                            Заказчик
+                        </button>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button class="theme-toggle" title="Переключить тему">
+                        <svg class="theme-toggle__icon">
+                            <use href="#icon-moon"></use>
+                        </svg>
+                    </button>
+
+                    <!-- Notifications -->
+                    <div class="notifications">
+                        <button class="notifications__trigger">
+                            <svg class="notifications__icon">
+                                <use href="#icon-bell"></use>
+                            </svg>
+                            <span class="notifications__badge">3</span>
+                        </button>
+                        <div class="notifications__dropdown">
+                            <div class="notifications__header">
+                                <h3>Уведомления</h3>
+                            </div>
+                            <div class="notifications__list" id="notificationsList">
+                                <!-- Notifications populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile -->
+                    <div class="user-profile">
+                        <div class="user-profile__avatar">АС</div>
+                        <div class="user-profile__info">
+                            <div class="user-profile__name">Алексей Смирнов</div>
+                            <div class="user-profile__role">Фрилансер</div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-toggle" aria-label="Открыть меню">
+                        <svg class="mobile-menu-toggle__icon">
+                            <use href="#icon-menu"></use>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation -->
+    <nav class="nav nav--mobile">
+        <a href="#" class="nav__link nav__link--active" data-page="home">
+            <svg class="nav__icon">
+                <use href="#icon-home"></use>
+            </svg>
+            <span>Главная</span>
+        </a>
+        <a href="#" class="nav__link" data-page="projects">
+            <svg class="nav__icon">
+                <use href="#icon-file-text"></use>
+            </svg>
+            <span>Проекты</span>
+        </a>
+        <a href="#" class="nav__link" data-page="talents">
+            <svg class="nav__icon">
+                <use href="#icon-users"></use>
+            </svg>
+            <span>Таланты</span>
+        </a>
+        <a href="#" class="nav__link" data-page="feed">
+            <svg class="nav__icon">
+                <use href="#icon-rss"></use>
+            </svg>
+            <span>Лента</span>
+        </a>
+        <a href="#" class="nav__link" data-page="chat">
+            <svg class="nav__icon">
+                <use href="#icon-message-circle"></use>
+            </svg>
+            <span>Чат</span>
+        </a>
+        <a href="#" class="nav__link" data-page="profile">
+            <svg class="nav__icon">
+                <use href="#icon-user"></use>
+            </svg>
+            <span>Профиль</span>
+        </a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Home Page -->
+        <div class="page page--active" id="homePage">
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="container">
+                    <div class="hero__content">
+                        <h1 class="hero__title" id="heroTitle">Найдите идеальные проекты с AI</h1>
+                        <p class="hero__subtitle" id="heroSubtitle">Персональные рекомендации на основе ваших навыков</p>
+
+                        <!-- Search Bar -->
+                        <div class="search-bar">
+                            <div class="search-bar__input-wrapper">
+                                <svg class="search-bar__icon">
+                                    <use href="#icon-search"></use>
+                                </svg>
+                                <input 
+                                    type="text" 
+                                    class="search-bar__input" 
+                                    placeholder="Поиск проектов, навыков, компаний..."
+                                    id="searchInput"
+                                >
+                            </div>
+                            <button class="search-bar__button">
+                                <svg class="search-bar__button-icon">
+                                    <use href="#icon-search"></use>
+                                </svg>
+                                <span>Найти</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Categories -->
+            <section class="categories">
+                <div class="container">
+                    <h2 class="section-title">Категории проектов</h2>
+                    <div class="categories__grid" id="categoriesGrid">
+                        <!-- Categories will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Featured Projects -->
+            <section class="featured-projects">
+                <div class="container">
+                    <h2 class="section-title">Рекомендуемые проекты</h2>
+                    <div class="projects-grid" id="featuredProjectsGrid">
+                        <!-- Featured projects will be populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Projects Page -->
+        <div class="page" id="projectsPage">
+            <div class="container">
+                <div class="projects-page__header">
+                    <h1 class="page-title">Проекты</h1>
+                    <button class="btn btn--primary" id="createProjectBtn">
+                        <svg class="btn__icon">
+                            <use href="#icon-edit"></use>
+                        </svg>
+                        Создать проект
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters">
+                    <div class="filters__row">
+                        <div class="filter-group">
+                            <label class="filter-group__label">Категория</label>
+                            <select class="filter-group__select" id="categoryFilter">
+                                <option value="">Все категории</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-group__label">Бюджет</label>
+                            <div class="budget-range">
+                                <input type="range" class="budget-range__slider" id="budgetRange" min="0" max="1000000" value="500000">
+                                <div class="budget-range__values">
+                                    <span id="budgetMin">0 ₸</span>
+                                    <span id="budgetMax">1,000,000 ₸</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-group__label">Сортировка</label>
+                            <select class="filter-group__select" id="sortFilter">
+                                <option value="newest">Сначала новые</option>
+                                <option value="budget-high">Бюджет: по убыванию</option>
+                                <option value="budget-low">Бюджет: по возрастанию</option>
+                                <option value="ai-score">AI Score</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Grid -->
+                <div class="projects-grid" id="projectsGrid">
+                    <!-- Projects will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Feed Page (Social Network) -->
+        <div class="page" id="feedPage">
+            <div class="container">
+                <div class="feed-header">
+                    <h1 class="page-title">Лента сообщества</h1>
+                    <button class="btn btn--primary" id="createPostBtn">
+                        <svg class="btn__icon">
+                            <use href="#icon-edit"></use>
+                        </svg>
+                        Создать пост
+                    </button>
+                </div>
+
+                <!-- Feed Filters -->
+                <div class="feed-filters">
+                    <button class="feed-filter feed-filter--active" data-filter="all">Все</button>
+                    <button class="feed-filter" data-filter="following">Подписки</button>
+                    <button class="feed-filter" data-filter="trending">Тренды</button>
+                </div>
+
+                <!-- Feed Posts -->
+                <div class="feed" id="feedPosts">
+                    <!-- Posts will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Talents Page -->
+        <div class="page" id="talentsPage">
+            <div class="container">
+                <h1 class="page-title">Найти таланты</h1>
+
+                <!-- Talent Filters -->
+                <div class="filters">
+                    <div class="filters__row">
+                        <div class="filter-group">
+                            <label class="filter-group__label">Навыки</label>
+                            <input type="text" class="filter-group__input" placeholder="React, Node.js, Python..." id="skillsFilter">
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-group__label">Ставка в час</label>
+                            <div class="budget-range">
+                                <input type="range" class="budget-range__slider" id="rateRange" min="1000" max="20000" value="10000">
+                                <div class="budget-range__values">
+                                    <span id="rateMin">1,000 ₸</span>
+                                    <span id="rateMax">20,000 ₸</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-group__label">Рейтинг</label>
+                            <select class="filter-group__select" id="ratingFilter">
+                                <option value="">Любой рейтинг</option>
+                                <option value="4.5">4.5+ звезд</option>
+                                <option value="4.0">4.0+ звезд</option>
+                                <option value="3.5">3.5+ звезд</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Talents Grid -->
+                <div class="talents-grid" id="talentsGrid">
+                    <!-- Talents will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Page -->
+        <div class="page" id="chatPage">
+            <div class="container">
+                <div class="chat-layout">
+                    <!-- Chat Sidebar -->
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar__header">
+                            <h2>Сообщения</h2>
+                        </div>
+                        <div class="chat-conversations" id="chatConversations">
+                            <!-- Conversations will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Chat Main -->
+                    <div class="chat-main">
+                        <div class="chat-header">
+                            <div class="chat-header__info">
+                                <div class="chat-header__avatar">TC</div>
+                                <div class="chat-header__details">
+                                    <h3 class="chat-header__name">TechCorp Solutions</h3>
+                                    <span class="chat-header__status">онлайн</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Messages will be populated by JavaScript -->
+                        </div>
+
+                        <div class="chat-input">
+                            <div class="chat-input__wrapper">
+                                <input 
+                                    type="text" 
+                                    class="chat-input__field" 
+                                    placeholder="Напишите сообщение..."
+                                    id="messageInput"
+                                >
+                                <button class="chat-input__send" id="sendMessageBtn">
+                                    <svg class="chat-input__send-icon">
+                                        <use href="#icon-send"></use>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div class="page" id="profilePage">
+            <div class="container">
+                <div class="profile-layout">
+                    <!-- Profile Header -->
+                    <div class="profile-header">
+                        <div class="profile-header__avatar">
+                            <div class="avatar avatar--large">АС</div>
+                            <button class="profile-header__edit-avatar">
+                                <svg class="profile-header__edit-icon">
+                                    <use href="#icon-edit"></use>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="profile-header__info">
+                            <h1 class="profile-header__name">Алексей Смирнов</h1>
+                            <p class="profile-header__title">Full-Stack разработчик</p>
+                            <div class="profile-header__meta">
+                                <div class="profile-header__rating">
+                                    <svg class="profile-header__star">
+                                        <use href="#icon-star"></use>
+                                    </svg>
+                                    <span>4.6</span>
+                                    <span class="profile-header__reviews">(23 отзыва)</span>
+                                </div>
+                                <div class="profile-header__location">Алматы, Казахстан</div>
+                            </div>
+                        </div>
+
+                        <div class="profile-header__stats">
+                            <div class="profile-stat">
+                                <div class="profile-stat__value">23</div>
+                                <div class="profile-stat__label">Проектов</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat__value">94%</div>
+                                <div class="profile-stat__label">Успешность</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat__value">156,800 ₸</div>
+                                <div class="profile-stat__label">Баланс</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Content -->
+                    <div class="profile-content">
+                        <!-- Skills -->
+                        <div class="profile-section">
+                            <h2 class="profile-section__title">Навыки</h2>
+                            <div class="skills-list" id="skillsList">
+                                <!-- Skills will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Experience -->
+                        <div class="profile-section">
+                            <h2 class="profile-section__title">Опыт работы</h2>
+                            <div class="experience-item">
+                                <h3>Senior Full-Stack Developer</h3>
+                                <p>TechFlow Solutions • 2021 - настоящее время</p>
+                                <p>Разработка веб-приложений на React и Node.js, руководство командой из 4 разработчиков.</p>
+                            </div>
+                        </div>
+
+                        <!-- Portfolio -->
+                        <div class="profile-section">
+                            <h2 class="profile-section__title">Портфолио</h2>
+                            <div class="portfolio-grid">
+                                <div class="portfolio-item">
+                                    <div class="portfolio-item__image">📱</div>
+                                    <h3 class="portfolio-item__title">E-commerce платформа</h3>
+                                    <p class="portfolio-item__description">React, Node.js, PostgreSQL</p>
+                                </div>
+                                <div class="portfolio-item">
+                                    <div class="portfolio-item__image">💼</div>
+                                    <h3 class="portfolio-item__title">CRM система</h3>
+                                    <p class="portfolio-item__description">Vue.js, Express, MongoDB</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- AI Assistant -->
+    <div class="ai-assistant">
+        <button class="ai-assistant__trigger" id="aiAssistantTrigger">
+            <svg class="ai-assistant__icon">
+                <use href="#icon-robot"></use>
+            </svg>
+            <span class="ai-assistant__pulse"></span>
+        </button>
+
+        <div class="ai-assistant__chat" id="aiChat">
+            <div class="ai-assistant__header">
+                <div class="ai-assistant__title">
+                    <svg class="ai-assistant__title-icon">
+                        <use href="#icon-robot"></use>
+                    </svg>
+                    <span>AI Ассистент</span>
+                </div>
+                <button class="ai-assistant__close" id="aiChatClose">
+                    <svg class="ai-assistant__close-icon">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="ai-assistant__messages" id="aiMessages">
+                <div class="ai-message ai-message--assistant">
+                    <div class="ai-message__avatar">
+                        <svg class="ai-message__avatar-icon">
+                            <use href="#icon-robot"></use>
+                        </svg>
+                    </div>
+                    <div class="ai-message__content">
+                        <p>Привет! Я ваш AI-ассистент. Помогу найти идеальные проекты и дам советы по развитию карьеры. Чем могу помочь?</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-assistant__input">
+                <div class="ai-assistant__input-wrapper">
+                    <input 
+                        type="text" 
+                        class="ai-assistant__input-field" 
+                        placeholder="Задайте вопрос..."
+                        id="aiInput"
+                    >
+                    <button class="ai-assistant__send" id="aiSend">
+                        <svg class="ai-assistant__send-icon">
+                            <use href="#icon-send"></use>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="projectModal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content">
+            <div class="modal__header">
+                <h2 class="modal__title" id="projectModalTitle"></h2>
+                <button class="modal__close">
+                    <svg class="modal__close-icon">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal__body" id="projectModalBody">
+                <!-- Project details will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div class="modal" id="createPostModal">
+        <div class="modal__backdrop"></div>
+        <div class="modal__content modal__content--large">
+            <div class="modal__header">
+                <h2 class="modal__title">Создать пост</h2>
+                <button class="modal__close">
+                    <svg class="modal__close-icon">
+                        <use href="#icon-x"></use>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal__body">
+                <form id="createPostForm">
+                    <div class="form-group">
+                        <label for="postTitle">Заголовок</label>
+                        <input type="text" id="postTitle" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="postContent">Содержание (Markdown)</label>
+                        <div class="editor">
+                            <div class="editor__toolbar">
+                                <button type="button" class="editor__tool" data-tool="bold">
+                                    <strong>B</strong>
+                                </button>
+                                <button type="button" class="editor__tool" data-tool="italic">
+                                    <em>I</em>
+                                </button>
+                                <button type="button" class="editor__tool" data-tool="link">
+                                    Link
+                                </button>
+                                <button type="button" class="editor__tool" data-tool="code">
+                                    Code
+                                </button>
+                                <button type="button" class="editor__preview-toggle" id="previewToggle">
+                                    Preview
+                                </button>
+                            </div>
+                            <textarea id="postContent" class="editor__textarea" rows="10" required></textarea>
+                            <div id="postPreview" class="editor__preview" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="postTags">Теги (через запятую)</label>
+                        <input type="text" id="postTags" class="form-control" placeholder="React, Node.js, JavaScript">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn--secondary" id="cancelPost">Отмена</button>
+                        <button type="submit" class="btn btn--primary">Опубликовать</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer">
+        <!-- Toast notifications will be populated by JavaScript -->
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

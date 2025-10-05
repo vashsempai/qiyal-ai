@@ -1,0 +1,17 @@
+{
+  "name": "Qiyal.ai Fullstack",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "backend",
+  "workspaceFolder": "/workspaces/qiyal-ai-fullstack",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "node",
+  "extensions": [
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+    "dbaeumer.vscode-eslint"
+  ],
+  "forwardPorts": [5000, 5173],
+  "postCreateCommand": "cd backend && npm install && cd ../frontend && npm install"
+}
