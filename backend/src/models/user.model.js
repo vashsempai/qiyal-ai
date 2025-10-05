@@ -1,5 +1,4 @@
 import { db } from '../utils/database.js';
-import bcrypt from 'bcryptjs';
 
 /**
  * The User model for interacting with the 'users' table in the database.
@@ -14,14 +13,10 @@ export const User = {
     const {
       username,
       email,
-      password,
+      password, // Note: This should be the hashed password from the service
       firstName,
       lastName,
-      // Add other fields from your schema here
     } = userData;
-
-    // Hash the password before storing it
-    const passwordHash = await bcrypt.hash(password, 10);
 
     const query = `
       INSERT INTO users (
@@ -31,7 +26,7 @@ export const User = {
       RETURNING id, username, email, first_name, last_name, created_at;
     `;
 
-    const params = [username, email, passwordHash, firstName, lastName];
+    const params = [username, email, password, firstName, lastName];
     const { rows } = await db.query(query, params);
     return rows[0];
   },
@@ -87,18 +82,20 @@ export const User = {
    * @returns {Promise<object>} The updated user object.
    */
   async update(id, updates) {
-    const_allowedUpdates = [
-        'first_name', 'last_name', 'display_name', 'bio', 'avatar_url', 'cover_image_url', 'country', 'city', 'timezone', 'language', 'currency', 'title', 'hourly_rate', 'availability_status', 'profile_visibility', 'show_earnings', 'show_location'
+    const allowedUpdates = [
+        'first_name', 'last_name', 'display_name', 'bio', 'avatar_url', 'cover_image_url',
+        'country', 'city', 'timezone', 'language', 'currency', 'title', 'hourly_rate',
+        'availability_status', 'profile_visibility', 'show_earnings', 'show_location'
     ];
 
-    const final_updates = {};
+    const finalUpdates = {};
     for (const key in updates) {
         if (allowedUpdates.includes(key)) {
-            final_updates[key] = updates[key]
+            finalUpdates[key] = updates[key];
         }
     }
 
-    const setClause = Object.keys(final_updates)
+    const setClause = Object.keys(finalUpdates)
       .map((key, index) => `"${key}" = $${index + 2}`)
       .join(', ');
 
@@ -113,7 +110,7 @@ export const User = {
       RETURNING *;
     `;
 
-    const params = [id, ...Object.values(final_updates)];
+    const params = [id, ...Object.values(finalUpdates)];
     const { rows } = await db.query(query, params);
     return rows[0];
   },

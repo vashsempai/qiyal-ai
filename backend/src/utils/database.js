@@ -42,6 +42,11 @@ export const db = {
    * @returns {Promise<QueryResult<any>>} The result of the query.
    */
   query: (text, params) => pool.query(text, params),
+
+  /**
+   * Closes the database connection pool.
+   */
+  close: () => pool.end(),
 };
 
 export default db;

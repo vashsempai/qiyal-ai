@@ -4,6 +4,8 @@ import userRoutes from './user.routes.js';
 import projectRoutes from './project.routes.js';
 import skillRoutes from './skill.routes.js';
 import proposalRoutes from './proposal.routes.js';
+import chatRoutes from './chat.routes.js';
+import paymentRoutes from './payment.routes.js';
 
 const router = express.Router();
 
@@ -17,6 +19,10 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/projects', projectRoutes);
 router.use('/skills', skillRoutes);
+import postRoutes from './post.routes.js';
 router.use('/proposals', proposalRoutes);
+router.use('/chat', chatRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/posts', postRoutes);
 
 export default router;
