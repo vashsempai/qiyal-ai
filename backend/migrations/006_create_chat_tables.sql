@@ -1,4 +1,10 @@
 -- Create ENUM types for Chat Module
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_type WHERE typname = 'participant_role') THEN
+    CREATE TYPE participant_role AS ENUM ('member','admin','owner');
+  END IF;
+END$$;
+
 CREATE TYPE conversation_type AS ENUM('direct', 'group', 'project');
 CREATE TYPE message_type AS ENUM('text', 'file', 'image', 'video', 'system', 'call');
 CREATE TYPE message_status AS ENUM('sent', 'delivered', 'read');
@@ -24,7 +30,7 @@ CREATE TABLE conversation_participants (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role ENUM('member', 'admin', 'owner') DEFAULT 'member',
+  role participant_role DEFAULT 'member',
   joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   is_muted BOOLEAN DEFAULT false,
