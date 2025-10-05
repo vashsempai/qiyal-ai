@@ -1,108 +1,70 @@
-const User = require('../models/user.model');
-const AuthService = require('../services/auth.service');
+import { UserService } from '../services/userService.js';
+import { AuthService } from '../services/auth.service.js';
+import { User } from '../models/user.model.js';
 
-const AuthController = {
+/**
+ * Controller for handling authentication-related requests like registration and login.
+ */
+export const AuthController = {
   /**
-   * Handles user registration.
+   * Handles user registration requests.
+   * It validates input, calls the user service to create the user,
+   * and sends a success response.
    */
   async register(req, res, next) {
     try {
-      const { email, username, password, firstName, lastName, role } = req.body;
-
-      // Check if user already exists
-      const existingEmail = await User.findByEmail(email);
-      if (existingEmail) {
-        return res.status(409).json({ message: 'Email already in use' });
-      }
-      const existingUsername = await User.findByUsername(username);
-      if (existingUsername) {
-        return res.status(409).json({ message: 'Username already in use' });
-      }
-
-      // Hash password
-      const passwordHash = await AuthService.hashPassword(password);
-
-      // Create user
-      const newUser = await User.create({
-        email,
-        username,
-        passwordHash,
-        firstName,
-        lastName,
-        role,
-      });
-
-      // Generate tokens
-      const tokens = AuthService.generateTokens(newUser);
-
-      // Sanitize user object before sending
-      const userResponse = { ...newUser };
-      delete userResponse.password_hash;
-
+      const newUser = await UserService.register(req.body);
       res.status(201).json({
-        message: 'User registered successfully',
-        user: userResponse,
-        tokens,
+        success: true,
+        message: 'User registered successfully.',
+        data: newUser,
       });
     } catch (error) {
+      // Pass errors to the error handling middleware
       next(error);
     }
   },
 
   /**
-   * Handles user login.
+   * Handles user login requests.
+   * It validates credentials, generates JWTs upon success,
+   * and returns the user data along with the tokens.
    */
   async login(req, res, next) {
     try {
-      const { login, password } = req.body;
+      const { email, password } = req.body;
 
-      // Find user by email or username
-      const user = await User.findByEmail(login) || await User.findByUsername(login);
+      // Find user by email
+      const user = await User.findByEmail(email);
       if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        return res.status(401).json({ success: false, message: 'Invalid credentials.' });
       }
 
       // Compare passwords
       const isMatch = await AuthService.comparePasswords(password, user.password_hash);
       if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        return res.status(401).json({ success: false, message: 'Invalid credentials.' });
       }
 
       // Generate tokens
       const tokens = AuthService.generateTokens(user);
 
-      // Sanitize user object
+      // Prepare user data for the response (omitting sensitive info)
       const userResponse = { ...user };
       delete userResponse.password_hash;
 
       res.status(200).json({
-        message: 'Login successful',
-        user: userResponse,
-        tokens,
+        success: true,
+        message: 'Login successful.',
+        data: {
+          user: userResponse,
+          tokens,
+        },
       });
     } catch (error) {
       next(error);
     }
   },
-
-  /**
-   * Fetches the profile of the currently authenticated user.
-   */
-  async getProfile(req, res, next) {
-    try {
-      // The user ID is attached to the request by the auth middleware
-      const userId = req.user.id;
-      const user = await User.findById(userId);
-
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      res.status(200).json({ user });
-    } catch (error) {
-      next(error);
-    }
-  }
 };
 
-module.exports = AuthController;
+export default AuthController;
