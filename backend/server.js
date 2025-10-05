@@ -5,6 +5,10 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
+const mainRouter = require('./src/routes');
+const errorHandler = require('./src/middleware/errorHandler');
+const logger = require('./src/utils/logger');
+
 const app = express();
 const server = http.createServer(app);
 
@@ -16,33 +20,40 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('combined'));
 
-// Routes
+// Use morgan for logging in development, but a more structured logger in production
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined', {
+    stream: { write: (message) => logger.info(message.trim()) }
+  }));
+}
+
+
+// API Routes
+app.use('/api', mainRouter);
+
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/docs', (req, res) => {
-  res.json({
-    title: 'Qiyal.ai API',
-    version: '1.0.0',
-    endpoints: {
-      auth: ['POST /api/auth/register', 'POST /api/auth/login'],
-      projects: ['GET /api/projects', 'POST /api/projects'],
-      social: ['GET /api/social/posts', 'POST /api/social/posts']
-    }
+
+// 404 handler for routes not found
+app.use('*', (req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: 'Resource not found'
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
+// Centralized error handler
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Qiyal.ai Backend running on port ${PORT}`);
+  logger.info(`🚀 Qiyal.ai Backend running on port ${PORT}`);
 });
 
 module.exports = app;

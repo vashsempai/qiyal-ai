@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+require('dotenv').config();
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
@@ -11,12 +12,17 @@ const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
+pool.on('connect', () => {
+  console.log('Database client connected');
+});
+
 pool.on('error', (err) => {
-  console.error('Database error:', err);
+  console.error('Unexpected error on idle database client', err);
+  process.exit(-1);
 });
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
   getClient: () => pool.connect(),
-  pool
+  pool,
 };
