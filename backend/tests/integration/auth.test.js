@@ -1,8 +1,6 @@
 import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll } from '@jest/globals';
 import { app, server } from '../../server.js';
-import { db } from '../../src/utils/database.js';
-import bcrypt from 'bcryptjs';
 
 // --- Mocking Libraries ---
 jest.mock('@sentry/node', () => ({
@@ -13,29 +11,39 @@ jest.mock('@sentry/node', () => ({
   },
 }));
 
+// Create mock functions for database
+const mockDbQuery = jest.fn();
+const mockDbClose = jest.fn();
+
 jest.mock('../../src/utils/database.js', () => ({
   db: {
-    query: jest.fn(),
-    close: jest.fn(),
+    query: mockDbQuery,
+    close: mockDbClose,
   },
 }));
+
+// Create mock functions for bcrypt
+const mockBcryptCompare = jest.fn();
+const mockBcryptGenSalt = jest.fn();
+const mockBcryptHash = jest.fn();
 
 jest.mock('bcryptjs', () => ({
   __esModule: true, // Handle ES module default export
   default: {
-    compare: jest.fn(),
-    genSalt: jest.fn(),
-    hash: jest.fn(),
+    compare: mockBcryptCompare,
+    genSalt: mockBcryptGenSalt,
+    hash: mockBcryptHash,
   },
 }));
 
+import { db } from '../../src/utils/database.js';
+import bcrypt from 'bcryptjs';
 
 describe('Auth API', () => {
-
   beforeEach(() => {
-    db.query.mockReset();
-    bcrypt.default.compare.mockReset();
-    bcrypt.default.hash.mockReset();
+    mockDbQuery.mockReset();
+    mockBcryptCompare.mockReset();
+    mockBcryptHash.mockReset();
   });
 
   afterAll(() => {
@@ -45,11 +53,11 @@ describe('Auth API', () => {
   describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
       // Arrange
-      db.query
+      mockDbQuery
         .mockResolvedValueOnce({ rows: [] }) // Check for existing email
         .mockResolvedValueOnce({ rows: [] }) // Check for existing username
         .mockResolvedValueOnce({ rows: [{ id: 'new-user-id', email: 'new@example.com' }] }); // Create user
-      bcrypt.default.hash.mockResolvedValue('hashed_password');
+      mockBcryptHash.mockResolvedValue('hashed_password');
 
       // Act
       const response = await request(app)
@@ -71,7 +79,7 @@ describe('Auth API', () => {
 
     it('should fail if email is already in use', async () => {
       // Arrange
-      db.query.mockResolvedValue({ rows: [{ id: 'existing-user' }] }); // Simulate user found
+      mockDbQuery.mockResolvedValue({ rows: [{ id: 'existing-user' }] }); // Simulate user found
 
       // Act
       const response = await request(app)
@@ -88,8 +96,8 @@ describe('Auth API', () => {
     it('should log in a user with correct credentials', async () => {
       // Arrange
       const mockUser = { id: 'user-1', email: 'test@example.com', password_hash: 'hashed' };
-      db.query.mockResolvedValue({ rows: [mockUser] });
-      bcrypt.default.compare.mockResolvedValue(true);
+      mockDbQuery.mockResolvedValue({ rows: [mockUser] });
+      mockBcryptCompare.mockResolvedValue(true);
 
       // Act
       const response = await request(app)
@@ -105,8 +113,8 @@ describe('Auth API', () => {
     it('should fail with incorrect credentials', async () => {
       // Arrange
       const mockUser = { id: 'user-1', email: 'test@example.com', password_hash: 'hashed' };
-      db.query.mockResolvedValue({ rows: [mockUser] });
-      bcrypt.default.compare.mockResolvedValue(false); // Password doesn't match
+      mockDbQuery.mockResolvedValue({ rows: [mockUser] });
+      mockBcryptCompare.mockResolvedValue(false); // Password doesn't match
 
       // Act
       const response = await request(app)
