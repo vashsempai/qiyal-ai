@@ -1,9 +1,16 @@
 import { Post } from '../models/post.model.js';
 import { Like } from '../models/like.model.js';
 import { Comment } from '../models/comment.model.js';
+import { GeminiService } from './gemini.service.js';
 
 export const PostService = {
   async createPost(authorId, postData) {
+    // AI Content Moderation
+    const moderationResult = await GeminiService.moderateContent(postData.content);
+    if (!moderationResult.isAppropriate) {
+      throw new Error(`Inappropriate content detected: ${moderationResult.reason}`);
+    }
+
     // Extract hashtags from content
     const hashtags = this.extractHashtags(postData.content);
     // Extract mentions from content
@@ -17,7 +24,6 @@ export const PostService = {
     });
 
     // TODO: Send notifications to mentioned users
-    // TODO: AI content moderation
 
     return post;
   },

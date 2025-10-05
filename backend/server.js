@@ -7,11 +7,51 @@ import dotenv from 'dotenv';
 import mainRouter from './src/routes/index.js';
 import errorHandler from './src/middleware/errorHandler.js';
 import logger from './src/utils/logger.js';
+import { Server } from 'socket.io';
+import { ChatService } from './src/services/chat.service.js';
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  socket.on('join_conversation', async (conversationId) => {
+    socket.join(conversationId);
+  });
+
+  socket.on('send_message', async (data) => {
+    try {
+      // Assuming ChatService.sendMessage now takes the sender's socket id
+      // to prevent them from receiving their own message event.
+      const message = await ChatService.sendMessage(data.senderId, data.conversationId, data);
+      io.to(data.conversationId).emit('new_message', message);
+    } catch (error) {
+      socket.emit('error', error.message);
+    }
+  });
+
+  socket.on('typing', (data) => {
+    socket.to(data.conversationId).emit('user_typing', {
+      userId: data.userId,
+      isTyping: data.isTyping
+    });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
 
 // Middleware setup
 app.use(helmet());
@@ -55,4 +95,4 @@ const PORT = process.env.PORT || 5000;
 // The server is started in index.js, not here.
 // This allows the app to be imported for testing without starting the server.
 
-export { app, server, PORT };
+export { app, server, io, PORT };

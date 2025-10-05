@@ -71,8 +71,8 @@ export const ChatService = {
       conversationId,
     });
 
-    // TODO: Trigger a real-time event via Socket.io to other participants.
-
+    // The real-time event is emitted from the socket handler in server.js
+    // after this service function successfully creates and returns the message.
     return message;
   },
 };

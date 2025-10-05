@@ -2,7 +2,7 @@ import { PaymentService } from '../services/payment.service.js';
 
 export const PaymentController = {
   /**
-   * Handles the request to create a new payment.
+   * Handles the request to create a new payment intent with Stripe.
    */
   async createPayment(req, res, next) {
     try {
@@ -13,7 +13,7 @@ export const PaymentController = {
 
       res.status(201).json({
         success: true,
-        message: 'Payment initiated successfully.',
+        message: 'Payment intent created successfully.',
         data: result,
       });
     } catch (error) {
@@ -22,22 +22,19 @@ export const PaymentController = {
   },
 
   /**
-   * Handles incoming webhook notifications from the Kaspi gateway.
+   * Handles incoming webhook notifications from the Stripe gateway.
    */
-  async handleKaspiWebhook(req, res, next) {
+  async handleStripeWebhook(req, res, next) {
     try {
-      const webhookData = req.body;
-      // TODO: Add webhook signature verification for security
+      const signature = req.headers['stripe-signature'];
+      // The raw body is attached by the express.raw middleware in payment.routes.js
+      await PaymentService.handleStripeWebhook(req.body, signature);
 
-      await PaymentService.handleKaspiWebhook(webhookData);
-
-      // Respond to Kaspi to acknowledge receipt
-      res.status(200).json({ success: true, message: 'Webhook received.' });
+      // Respond to Stripe to acknowledge receipt
+      res.status(200).json({ received: true });
     } catch (error) {
-      // Log the error but send a generic success response to the gateway
-      // to prevent retries for non-recoverable errors.
-      console.error('Kaspi webhook processing failed:', error);
-      res.status(200).json({ success: true, message: 'Webhook acknowledged.' });
+      console.error('Stripe webhook processing failed:', error.message);
+      res.status(400).send(`Webhook Error: ${error.message}`);
     }
   },
 };

@@ -1,6 +1,6 @@
 -- Create ENUM types for Payment Module
 CREATE TYPE payment_status AS ENUM('pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded');
-CREATE TYPE payment_method AS ENUM('kaspi', 'card', 'bank_transfer', 'balance', 'crypto');
+CREATE TYPE payment_method AS ENUM('stripe', 'card', 'bank_transfer', 'balance', 'crypto');
 CREATE TYPE transaction_type AS ENUM('deposit', 'withdrawal', 'payment', 'refund', 'commission', 'bonus');
 
 -- Payments Table
