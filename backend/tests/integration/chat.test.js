@@ -3,6 +3,18 @@ import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@je
 import { server } from '../../server.js';
 import { db } from '../../src/utils/database.js';
 
+// Mock ioredis to prevent Redis connection errors in tests
+jest.mock('ioredis', () => {
+  return jest.fn().mockImplementation(() => ({
+    on: jest.fn(),
+    set: jest.fn(),
+    get: jest.fn(),
+    incr: jest.fn(),
+    expire: jest.fn(),
+    disconnect: jest.fn(),
+  }));
+});
+
 // Mock Sentry to prevent initialization errors in tests
 jest.mock('@sentry/node', () => ({
   init: jest.fn(),
