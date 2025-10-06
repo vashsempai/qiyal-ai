@@ -44,6 +44,14 @@ jest.mock('bcryptjs', () => ({
   hash: mockBcryptHash,
 }));
 
+// Mock Gemini service to prevent API calls
+jest.mock('../../src/services/gemini.service.js', () => ({
+  __esModule: true,
+  default: {
+    moderateContent: jest.fn().mockResolvedValue({ isAppropriate: true }),
+  },
+}));
+
 import bcrypt from 'bcryptjs';
 
 describe('Social API (with pg mocked)', () => {
