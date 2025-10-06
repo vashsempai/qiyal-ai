@@ -1,3 +1,7 @@
+// Set JWT secrets for testing
+process.env.JWT_SECRET = 'test-secret-key-for-jwt-tokens';
+process.env.JWT_REFRESH_SECRET = 'test-secret-key-for-jwt-tokens';
+
 import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll } from '@jest/globals';
 import { app, server } from '../../server.js';
