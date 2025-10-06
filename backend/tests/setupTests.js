@@ -10,7 +10,7 @@ const mockCreatePost = jest.fn();
 const mockFindById = jest.fn();
 const mockLikePost = jest.fn();
 
-jest.mock('../../src/services/post.service.js', () => ({
+jest.mock('../src/services/post.service.js', () => ({
   __esModule: true,
   PostService: {
     createPost: mockCreatePost,
@@ -27,7 +27,7 @@ jest.mock('../../src/services/post.service.js', () => ({
 // Mock GeminiService BEFORE any imports
 const mockModerateContent = jest.fn();
 
-jest.mock('../../src/services/gemini.service.js', () => ({
+jest.mock('../src/services/gemini.service.js', () => ({
   __esModule: true,
   GeminiService: {
     moderateContent: mockModerateContent,
