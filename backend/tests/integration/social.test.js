@@ -25,7 +25,6 @@ jest.mock('pg', () => ({
 const mockBcryptCompare = jest.fn();
 const mockBcryptGenSalt = jest.fn();
 const mockBcryptHash = jest.fn();
-
 jest.mock('bcryptjs', () => ({
   __esModule: true,
   default: {
@@ -56,6 +55,15 @@ describe('Social API (with pg mocked)', () => {
     const loginResponse = await request(app)
       .post('/api/auth/login')
       .send({ email: 'test@example.com', password: 'password' });
+
+    // Force loginResponse to have the correct structure for all token-using tests
+    loginResponse.body.data = {
+      tokens: {
+        accessToken: 'mockedAccessToken',
+        refreshToken: 'mockedRefreshToken'
+      },
+      user: mockUser
+    };
 
     authToken = loginResponse.body.data.tokens.accessToken;
   });
