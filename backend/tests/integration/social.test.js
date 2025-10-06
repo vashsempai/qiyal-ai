@@ -31,7 +31,6 @@ jest.mock('pg', () => ({
 const mockBcryptCompare = jest.fn();
 const mockBcryptGenSalt = jest.fn();
 const mockBcryptHash = jest.fn();
-
 jest.mock('bcryptjs', () => ({
   __esModule: true,
   default: {
@@ -52,6 +51,47 @@ jest.mock('../../src/services/gemini.service.js', () => ({
   },
 }));
 
+// Mock Post model
+const mockPostFindById = jest.fn();
+const mockPostCreate = jest.fn();
+const mockPostIncrementCount = jest.fn();
+const mockPostDecrementCount = jest.fn();
+
+jest.mock('../../src/models/post.model.js', () => ({
+  __esModule: true,
+  default: {
+    findById: mockPostFindById,
+    create: mockPostCreate,
+    incrementCount: mockPostIncrementCount,
+    decrementCount: mockPostDecrementCount,
+  },
+  Post: {
+    findById: mockPostFindById,
+    create: mockPostCreate,
+    incrementCount: mockPostIncrementCount,
+    decrementCount: mockPostDecrementCount,
+  },
+}));
+
+// Mock Like model
+const mockLikeExists = jest.fn();
+const mockLikeCreate = jest.fn();
+const mockLikeRemove = jest.fn();
+
+jest.mock('../../src/models/like.model.js', () => ({
+  __esModule: true,
+  default: {
+    exists: mockLikeExists,
+    create: mockLikeCreate,
+    remove: mockLikeRemove,
+  },
+  Like: {
+    exists: mockLikeExists,
+    create: mockLikeCreate,
+    remove: mockLikeRemove,
+  },
+}));
+
 import bcrypt from 'bcryptjs';
 
 describe('Social API (with pg mocked)', () => {
@@ -69,7 +109,6 @@ describe('Social API (with pg mocked)', () => {
       TEST_SECRET,
       { expiresIn: '1h' }
     );
-
     const refreshToken = jwt.sign(
       { sub: mockUser.id, email: mockUser.email },
       TEST_SECRET,
@@ -97,9 +136,16 @@ describe('Social API (with pg mocked)', () => {
   });
 
   beforeEach(() => {
-    // Reset mocks before each test
+    // Reset all mocks before each test
     mockQuery.mockReset();
     mockBcryptCompare.mockClear();
+    mockPostFindById.mockClear();
+    mockPostCreate.mockClear();
+    mockPostIncrementCount.mockClear();
+    mockPostDecrementCount.mockClear();
+    mockLikeExists.mockClear();
+    mockLikeCreate.mockClear();
+    mockLikeRemove.mockClear();
   });
 
   afterAll(() => {
@@ -114,10 +160,15 @@ describe('Social API (with pg mocked)', () => {
       const mockCreatedPost = { 
         id: '22222222-2222-2222-2222-222222222222', 
         author_id: mockUser.id, 
-        content: postContent 
+        content: postContent,
+        content_type: 'text',
+        likes_count: 0,
+        comments_count: 0,
+        created_at: new Date().toISOString()
       };
-
-      mockQuery.mockResolvedValueOnce({ rows: [mockCreatedPost] });
+      
+      // Mock Post.create to return the created post
+      mockPostCreate.mockResolvedValue(mockCreatedPost);
 
       // Act
       const response = await request(app)
@@ -128,18 +179,32 @@ describe('Social API (with pg mocked)', () => {
       // Assert
       expect(response.status).toBe(201);
       expect(response.body.data.id).toBe('22222222-2222-2222-2222-222222222222');
+      expect(mockPostCreate).toHaveBeenCalledWith(expect.objectContaining({
+        authorId: mockUser.id,
+        content: postContent
+      }));
     });
   });
 
   describe('POST /api/posts/:id/like', () => {
     const mockPostId = '33333333-3333-3333-3333-333333333333';
+    const mockPost = {
+      id: mockPostId,
+      author_id: mockUser.id,
+      content: 'Test post',
+      likes_count: 0
+    };
 
     it('should like a post successfully', async () => {
       // Arrange
-      mockQuery.mockResolvedValueOnce({ rows: [{ id: mockPostId }] }); // Post.findById
-      mockQuery.mockResolvedValueOnce({ rows: [] }); // Like.exists returns false
-      mockQuery.mockResolvedValueOnce({ rows: [{}] }); // Like.create
-      mockQuery.mockResolvedValueOnce({ rows: [{}] }); // Post.incrementCount
+      mockPostFindById.mockResolvedValue(mockPost);
+      mockLikeExists.mockResolvedValue(false); // User hasn't liked yet
+      mockLikeCreate.mockResolvedValue({ 
+        id: '44444444-4444-4444-4444-444444444444',
+        user_id: mockUser.id,
+        post_id: mockPostId 
+      });
+      mockPostIncrementCount.mockResolvedValue({ likes_count: 1 });
 
       // Act
       const response = await request(app)
@@ -149,14 +214,22 @@ describe('Social API (with pg mocked)', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(response.body.data.liked).toBe(true);
+      expect(mockPostFindById).toHaveBeenCalledWith(mockPostId);
+      expect(mockLikeExists).toHaveBeenCalledWith(mockUser.id, mockPostId, null);
+      expect(mockLikeCreate).toHaveBeenCalledWith(mockUser.id, mockPostId, null);
+      expect(mockPostIncrementCount).toHaveBeenCalledWith(mockPostId, 'likes_count');
     });
 
     it('should unlike a post successfully', async () => {
       // Arrange
-      mockQuery.mockResolvedValueOnce({ rows: [{ id: mockPostId }] }); // Post.findById
-      mockQuery.mockResolvedValueOnce({ rows: [{ id: '44444444-4444-4444-4444-444444444444' }] }); // Like.exists returns true
-      mockQuery.mockResolvedValueOnce({ rows: [{}] }); // Like.remove
-      mockQuery.mockResolvedValueOnce({ rows: [{}] }); // Post.decrementCount
+      mockPostFindById.mockResolvedValue(mockPost);
+      mockLikeExists.mockResolvedValue(true); // User has already liked
+      mockLikeRemove.mockResolvedValue({ 
+        id: '44444444-4444-4444-4444-444444444444',
+        user_id: mockUser.id,
+        post_id: mockPostId 
+      });
+      mockPostDecrementCount.mockResolvedValue({ likes_count: 0 });
 
       // Act
       const response = await request(app)
@@ -166,6 +239,10 @@ describe('Social API (with pg mocked)', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(response.body.data.liked).toBe(false);
+      expect(mockPostFindById).toHaveBeenCalledWith(mockPostId);
+      expect(mockLikeExists).toHaveBeenCalledWith(mockUser.id, mockPostId, null);
+      expect(mockLikeRemove).toHaveBeenCalledWith(mockUser.id, mockPostId, null);
+      expect(mockPostDecrementCount).toHaveBeenCalledWith(mockPostId, 'likes_count');
     });
   });
 });
