@@ -1,3 +1,8 @@
+// Set JWT_SECRET before importing the server so AuthService uses the same secret
+const TEST_SECRET = 'test-secret-key-for-jwt-tokens';
+process.env.JWT_SECRET = TEST_SECRET;
+process.env.JWT_REFRESH_SECRET = TEST_SECRET;
+
 import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
 import { app, server } from '../../server.js';
@@ -39,8 +44,6 @@ jest.mock('bcryptjs', () => ({
 }));
 
 import bcrypt from 'bcryptjs';
-
-const TEST_SECRET = process.env.JWT_SECRET || 'test-secret-key-for-jwt-tokens';
 
 describe('Social API (with pg mocked)', () => {
   let authToken;
