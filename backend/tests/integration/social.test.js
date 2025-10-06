@@ -2,7 +2,6 @@
 const TEST_SECRET = 'test-secret-key-for-jwt-tokens';
 process.env.JWT_SECRET = TEST_SECRET;
 process.env.JWT_REFRESH_SECRET = TEST_SECRET;
-
 import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
 import { app, server } from '../../server.js';
@@ -157,12 +156,24 @@ describe('Social API (with pg mocked)', () => {
       const postContent = 'This is a brand new post!';
       const mockCreatedPost = { 
         id: '22222222-2222-2222-2222-222222222222', 
-        author_id: mockUser.id, 
+        author_id: mockUser.id,
+        author: {
+          id: mockUser.id,
+          email: mockUser.email,
+          username: 'test',
+          avatar_url: null
+        },
         content: postContent,
         content_type: 'text',
+        media_url: null,
+        visibility: 'public',
         likes_count: 0,
         comments_count: 0,
-        created_at: new Date().toISOString()
+        shares_count: 0,
+        views_count: 0,
+        is_edited: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       
       // Mock Post.create to return the created post
@@ -173,6 +184,8 @@ describe('Social API (with pg mocked)', () => {
         .post('/api/posts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({ content: postContent });
+
+      console.log('RESPONSE', response.body);
 
       // Assert
       expect(response.status).toBe(201);
@@ -189,8 +202,23 @@ describe('Social API (with pg mocked)', () => {
     const mockPost = {
       id: mockPostId,
       author_id: mockUser.id,
+      author: {
+        id: mockUser.id,
+        email: mockUser.email,
+        username: 'test',
+        avatar_url: null
+      },
       content: 'Test post',
-      likes_count: 0
+      content_type: 'text',
+      media_url: null,
+      visibility: 'public',
+      likes_count: 0,
+      comments_count: 0,
+      shares_count: 0,
+      views_count: 0,
+      is_edited: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     it('should like a post successfully', async () => {
@@ -200,14 +228,20 @@ describe('Social API (with pg mocked)', () => {
       mockLikeCreate.mockResolvedValue({ 
         id: '44444444-4444-4444-4444-444444444444',
         user_id: mockUser.id,
-        post_id: mockPostId 
+        post_id: mockPostId,
+        created_at: new Date().toISOString()
       });
-      mockPostIncrementCount.mockResolvedValue({ likes_count: 1 });
+      mockPostIncrementCount.mockResolvedValue({ 
+        ...mockPost,
+        likes_count: 1 
+      });
 
       // Act
       const response = await request(app)
         .post(`/api/posts/${mockPostId}/like`)
         .set('Authorization', `Bearer ${authToken}`);
+
+      console.log('RESPONSE', response.body);
 
       // Assert
       expect(response.status).toBe(200);
@@ -225,14 +259,20 @@ describe('Social API (with pg mocked)', () => {
       mockLikeRemove.mockResolvedValue({ 
         id: '44444444-4444-4444-4444-444444444444',
         user_id: mockUser.id,
-        post_id: mockPostId 
+        post_id: mockPostId,
+        created_at: new Date().toISOString()
       });
-      mockPostDecrementCount.mockResolvedValue({ likes_count: 0 });
+      mockPostDecrementCount.mockResolvedValue({ 
+        ...mockPost,
+        likes_count: 0 
+      });
 
       // Act
       const response = await request(app)
         .post(`/api/posts/${mockPostId}/like`)
         .set('Authorization', `Bearer ${authToken}`);
+
+      console.log('RESPONSE', response.body);
 
       // Assert
       expect(response.status).toBe(200);
