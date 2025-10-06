@@ -1,8 +1,9 @@
 // CRITICAL: jest.mock must be STRICTLY BEFORE any imports for ESM to work
-// Mock auth middleware FIRST - before ANY imports including jest itself
+// Mock auth middleware FIRST - before ANY imports, even jest itself
+// IMPORTANT: Cannot use jest.fn() here as jest is not imported yet - use plain function
 jest.mock('../../src/middleware/auth.middleware.js', () => ({
   __esModule: true,
-  protect: jest.fn((req, res, next) => {
+  protect: (req, res, next) => {
     // Always set req.user to a valid object
     req.user = {
       id: '11111111-1111-1111-1111-111111111111',
@@ -10,10 +11,10 @@ jest.mock('../../src/middleware/auth.middleware.js', () => ({
       username: 'testuser',
     };
     next();
-  }),
+  },
 }));
 
-// Now import jest so we can use jest.fn()
+// Now import jest so we can use jest.fn() for other mocks
 import { jest } from '@jest/globals';
 
 // Mock GeminiService - ONLY what's needed for social post endpoints
