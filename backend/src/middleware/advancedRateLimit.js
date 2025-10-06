@@ -2,19 +2,22 @@ import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import Redis from 'ioredis';
 
-// If in test mode, export pass-through middleware instead
-if (process.env.NODE_ENV === 'test') {
-  const passThroughMiddleware = (req, res, next) => next();
-  
-  export const createRateLimit = () => passThroughMiddleware;
-  export const authRateLimit = passThroughMiddleware;
-  export const apiRateLimit = passThroughMiddleware;
-  export const chatRateLimit = passThroughMiddleware;
-} else {
-  // Initialize Redis client.
-  // It will automatically use the REDIS_URL environment variable if it's set.
-  const redisClient = new Redis(process.env.REDIS_URL);
+// Pass-through middleware for test mode
+const passThroughMiddleware = (req, res, next) => next();
 
+// Conditional logic based on NODE_ENV
+let createRateLimit, authRateLimit, apiRateLimit, chatRateLimit;
+
+if (process.env.NODE_ENV === 'test') {
+  // In test mode, export pass-through middleware
+  createRateLimit = () => passThroughMiddleware;
+  authRateLimit = passThroughMiddleware;
+  apiRateLimit = passThroughMiddleware;
+  chatRateLimit = passThroughMiddleware;
+} else {
+  // Initialize Redis client for production/development
+  const redisClient = new Redis(process.env.REDIS_URL);
+  
   redisClient.on('error', (err) => {
     console.error('Redis connection error for rate limiting:', err);
   });
@@ -26,18 +29,17 @@ if (process.env.NODE_ENV === 'test') {
    * @param {boolean} [skipSuccessfulRequests=false] - Whether to count successful requests.
    * @returns {Function} The rate limit middleware.
    */
-  export const createRateLimit = (windowMs, max, skipSuccessfulRequests = false) => {
+  createRateLimit = (windowMs, max, skipSuccessfulRequests = false) => {
     return rateLimit({
       store: new RedisStore({
-        // The `ioredis` client instance to use.
         sendCommand: (...args) => redisClient.call(...args),
       }),
       windowMs,
       max,
       skipSuccessfulRequests,
-      standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-      legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-      handler: (req, res, /*, next, options*/) =>
+      standardHeaders: true,
+      legacyHeaders: false,
+      handler: (req, res) =>
         res.status(429).json({
           success: false,
           message: "Too many requests, please try again later."
@@ -46,7 +48,9 @@ if (process.env.NODE_ENV === 'test') {
   };
 
   // Create different rate limiters for different types of endpoints
-  export const authRateLimit = createRateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
-  export const apiRateLimit = createRateLimit(15 * 60 * 1000, 100); // 100 requests per 15 minutes
-  export const chatRateLimit = createRateLimit(60 * 1000, 30); // 30 requests per minute
+  authRateLimit = createRateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
+  apiRateLimit = createRateLimit(15 * 60 * 1000, 100); // 100 requests per 15 minutes
+  chatRateLimit = createRateLimit(60 * 1000, 30); // 30 requests per minute
 }
+
+export { createRateLimit, authRateLimit, apiRateLimit, chatRateLimit };
