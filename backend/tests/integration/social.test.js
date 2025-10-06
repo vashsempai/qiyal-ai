@@ -37,7 +37,21 @@ jest.mock('bcryptjs', () => ({
   hash: mockBcryptHash,
 }));
 
+// Mock jsonwebtoken for auth middleware
+const mockJwtVerify = jest.fn();
+const mockJwtSign = jest.fn();
+jest.mock('jsonwebtoken', () => ({
+  __esModule: true,
+  default: {
+    verify: mockJwtVerify,
+    sign: mockJwtSign,
+  },
+  verify: mockJwtVerify,
+  sign: mockJwtSign,
+}));
+
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 describe('Social API (with pg mocked)', () => {
   let authToken;
@@ -66,6 +80,12 @@ describe('Social API (with pg mocked)', () => {
     };
 
     authToken = loginResponse.body.data.tokens.accessToken;
+
+    // Mock JWT verification to always return the mock user
+    mockJwtVerify.mockReturnValue({
+      sub: mockUser.id,
+      email: mockUser.email
+    });
   });
 
   beforeEach(() => {
