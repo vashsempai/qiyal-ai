@@ -43,10 +43,10 @@ jest.mock('bcryptjs', () => ({
   hash: mockBcryptHash,
 }));
 
-// Mock Gemini service to prevent API calls
+// Mock Gemini service to prevent API calls - using named export GeminiService
 jest.mock('../../src/services/gemini.service.js', () => ({
   __esModule: true,
-  default: {
+  GeminiService: {
     moderateContent: jest.fn().mockResolvedValue({ isAppropriate: true }),
   },
 }));
@@ -56,7 +56,6 @@ const mockPostFindById = jest.fn();
 const mockPostCreate = jest.fn();
 const mockPostIncrementCount = jest.fn();
 const mockPostDecrementCount = jest.fn();
-
 jest.mock('../../src/models/post.model.js', () => ({
   __esModule: true,
   default: {
@@ -77,7 +76,6 @@ jest.mock('../../src/models/post.model.js', () => ({
 const mockLikeExists = jest.fn();
 const mockLikeCreate = jest.fn();
 const mockLikeRemove = jest.fn();
-
 jest.mock('../../src/models/like.model.js', () => ({
   __esModule: true,
   default: {
