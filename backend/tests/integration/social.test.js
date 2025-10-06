@@ -7,6 +7,9 @@ import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
 import jwt from 'jsonwebtoken';
 
+// Import global mocks from setupTests
+import { mockCreatePost, mockLikePost } from '../setupTests.js';
+
 // --- Mocking Libraries ---
 jest.mock('@sentry/node', () => ({
   init: jest.fn(),
@@ -40,21 +43,6 @@ jest.mock('bcryptjs', () => ({
   compare: mockBcryptCompare,
   genSalt: mockBcryptGenSalt,
   hash: mockBcryptHash,
-}));
-
-// Mock PostService - this is the key change!
-const mockCreatePost = jest.fn();
-const mockLikePost = jest.fn();
-jest.mock('../../src/services/post.service.js', () => ({
-  __esModule: true,
-  PostService: {
-    createPost: mockCreatePost,
-    likePost: mockLikePost,
-  },
-  default: {
-    createPost: mockCreatePost,
-    likePost: mockLikePost,
-  },
 }));
 
 import { app, server } from '../../server.js';
@@ -97,7 +85,6 @@ describe('Social API (with pg mocked)', () => {
       },
       user: mockUser
     };
-
     authToken = loginResponse.body.data.tokens.accessToken;
   });
 
