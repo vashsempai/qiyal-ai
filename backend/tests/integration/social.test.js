@@ -31,6 +31,7 @@ jest.mock('pg', () => ({
 const mockBcryptCompare = jest.fn();
 const mockBcryptGenSalt = jest.fn();
 const mockBcryptHash = jest.fn();
+
 jest.mock('bcryptjs', () => ({
   __esModule: true,
   default: {
@@ -48,7 +49,7 @@ import bcrypt from 'bcryptjs';
 describe('Social API (with pg mocked)', () => {
   let authToken;
   const mockUser = {
-    id: 'mock-user-id-123',
+    id: '11111111-1111-1111-1111-111111111111',
     email: 'test@example.com',
     password_hash: 'hashedpassword',
   };
@@ -60,6 +61,7 @@ describe('Social API (with pg mocked)', () => {
       TEST_SECRET,
       { expiresIn: '1h' }
     );
+
     const refreshToken = jwt.sign(
       { sub: mockUser.id, email: mockUser.email },
       TEST_SECRET,
@@ -69,6 +71,7 @@ describe('Social API (with pg mocked)', () => {
     // Perform login once to get a token for all tests in this suite
     mockQuery.mockResolvedValueOnce({ rows: [mockUser] });
     mockBcryptCompare.mockResolvedValue(true);
+
     const loginResponse = await request(app)
       .post('/api/auth/login')
       .send({ email: 'test@example.com', password: 'password' });
@@ -81,6 +84,7 @@ describe('Social API (with pg mocked)', () => {
       },
       user: mockUser
     };
+
     authToken = loginResponse.body.data.tokens.accessToken;
   });
 
@@ -99,7 +103,12 @@ describe('Social API (with pg mocked)', () => {
     it('should create a new post for an authenticated user', async () => {
       // Arrange
       const postContent = 'This is a brand new post!';
-      const mockCreatedPost = { id: 'mock-post-id-456', author_id: mockUser.id, content: postContent };
+      const mockCreatedPost = { 
+        id: '22222222-2222-2222-2222-222222222222', 
+        author_id: mockUser.id, 
+        content: postContent 
+      };
+
       mockQuery.mockResolvedValueOnce({ rows: [mockCreatedPost] });
 
       // Act
@@ -110,12 +119,12 @@ describe('Social API (with pg mocked)', () => {
 
       // Assert
       expect(response.status).toBe(201);
-      expect(response.body.data.id).toBe('mock-post-id-456');
+      expect(response.body.data.id).toBe('22222222-2222-2222-2222-222222222222');
     });
   });
 
   describe('POST /api/posts/:id/like', () => {
-    const mockPostId = 'post-to-be-liked';
+    const mockPostId = '33333333-3333-3333-3333-333333333333';
 
     it('should like a post successfully', async () => {
       // Arrange
@@ -137,7 +146,7 @@ describe('Social API (with pg mocked)', () => {
     it('should unlike a post successfully', async () => {
       // Arrange
       mockQuery.mockResolvedValueOnce({ rows: [{ id: mockPostId }] }); // Post.findById
-      mockQuery.mockResolvedValueOnce({ rows: [{ id: 'like-id' }] }); // Like.exists returns true
+      mockQuery.mockResolvedValueOnce({ rows: [{ id: '44444444-4444-4444-4444-444444444444' }] }); // Like.exists returns true
       mockQuery.mockResolvedValueOnce({ rows: [{}] }); // Like.remove
       mockQuery.mockResolvedValueOnce({ rows: [{}] }); // Post.decrementCount
 
