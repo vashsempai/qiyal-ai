@@ -2,6 +2,12 @@
 import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
 import request from 'supertest';
 
+// Create mock functions BEFORE any mocks
+const mockCreatePost = jest.fn();
+const mockFindById = jest.fn();
+const mockLikePost = jest.fn();
+const mockModerateContent = jest.fn();
+
 // Mock auth middleware - protect always inserts req.user
 jest.mock('../../src/middleware/auth.middleware.js', () => ({
   __esModule: true,
@@ -16,10 +22,22 @@ jest.mock('../../src/middleware/auth.middleware.js', () => ({
 }));
 
 // Mock GeminiService
-jest.mock('../../src/services/gemini.service.js');
+jest.mock('../../src/services/gemini.service.js', () => ({
+  __esModule: true,
+  GeminiService: {
+    moderateContent: mockModerateContent,
+  },
+}));
 
 // Mock PostService
-jest.mock('../../src/services/post.service.js');
+jest.mock('../../src/services/post.service.js', () => ({
+  __esModule: true,
+  PostService: {
+    createPost: mockCreatePost,
+    findById: mockFindById,
+    likePost: mockLikePost,
+  },
+}));
 
 // Dynamic import after mocks
 let app, server;
@@ -27,22 +45,12 @@ let app, server;
 describe('Social API Integration Tests', () => {
   let authToken;
   const mockUserId = '11111111-1111-1111-1111-111111111111';
-  let mockCreatePost, mockFindById, mockLikePost, mockModerateContent;
 
   beforeAll(async () => {
     // Dynamic import after all mocks are set up
     const m = await import('../../server.js');
     app = m.app;
     server = m.server;
-
-    // Import mocked services to get their mock functions
-    const { PostService } = await import('../../src/services/post.service.js');
-    const { GeminiService } = await import('../../src/services/gemini.service.js');
-
-    mockCreatePost = PostService.createPost;
-    mockFindById = PostService.findById;
-    mockLikePost = PostService.likePost;
-    mockModerateContent = GeminiService.moderateContent;
 
     // For these tests, we assume a valid auth token is provided
     authToken = 'mock-valid-token-for-testing';
