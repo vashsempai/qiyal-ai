@@ -1,7 +1,6 @@
 // Set JWT secrets for testing
 process.env.JWT_SECRET = 'test-secret-key-for-jwt-tokens';
 process.env.JWT_REFRESH_SECRET = 'test-secret-key-for-jwt-tokens';
-
 import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll } from '@jest/globals';
 import { app, server } from '../../server.js';
@@ -91,7 +90,7 @@ describe('Auth API', () => {
         .send({ email: 'existing@example.com', password: 'password123' });
 
       // Assert
-      expect(response.status).toBe(500); // The service throws a generic error
+      expect(response.status).toBe(400); // Changed from 500 to 400 for proper validation error
       expect(response.body.error.message).toBe('User already exists with this email');
     });
   });
