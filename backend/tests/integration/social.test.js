@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
 import { app, server } from '../../server.js';
+import jwt from 'jsonwebtoken';
 
 // --- Mocking Libraries ---
 jest.mock('@sentry/node', () => ({
@@ -37,21 +38,9 @@ jest.mock('bcryptjs', () => ({
   hash: mockBcryptHash,
 }));
 
-// Mock jsonwebtoken for auth middleware
-const mockJwtVerify = jest.fn();
-const mockJwtSign = jest.fn();
-jest.mock('jsonwebtoken', () => ({
-  __esModule: true,
-  default: {
-    verify: mockJwtVerify,
-    sign: mockJwtSign,
-  },
-  verify: mockJwtVerify,
-  sign: mockJwtSign,
-}));
-
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+
+const TEST_SECRET = process.env.JWT_SECRET || 'test-secret-key-for-jwt-tokens';
 
 describe('Social API (with pg mocked)', () => {
   let authToken;
@@ -62,30 +51,34 @@ describe('Social API (with pg mocked)', () => {
   };
 
   beforeAll(async () => {
+    // Generate real JWT tokens using jwt.sign with the test secret
+    const accessToken = jwt.sign(
+      { sub: mockUser.id, email: mockUser.email },
+      TEST_SECRET,
+      { expiresIn: '1h' }
+    );
+    const refreshToken = jwt.sign(
+      { sub: mockUser.id, email: mockUser.email },
+      TEST_SECRET,
+      { expiresIn: '7d' }
+    );
+
     // Perform login once to get a token for all tests in this suite
     mockQuery.mockResolvedValueOnce({ rows: [mockUser] });
     mockBcryptCompare.mockResolvedValue(true);
-
     const loginResponse = await request(app)
       .post('/api/auth/login')
       .send({ email: 'test@example.com', password: 'password' });
 
-    // Force loginResponse to have the correct structure for all token-using tests
+    // Force loginResponse to have the correct structure with real JWT tokens
     loginResponse.body.data = {
       tokens: {
-        accessToken: 'mockedAccessToken',
-        refreshToken: 'mockedRefreshToken'
+        accessToken,
+        refreshToken
       },
       user: mockUser
     };
-
     authToken = loginResponse.body.data.tokens.accessToken;
-
-    // Mock JWT verification to always return the mock user
-    mockJwtVerify.mockReturnValue({
-      sub: mockUser.id,
-      email: mockUser.email
-    });
   });
 
   beforeEach(() => {
