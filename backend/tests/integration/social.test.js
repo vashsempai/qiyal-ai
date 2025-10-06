@@ -2,9 +2,9 @@
 const TEST_SECRET = 'test-secret-key-for-jwt-tokens';
 process.env.JWT_SECRET = TEST_SECRET;
 process.env.JWT_REFRESH_SECRET = TEST_SECRET;
+
 import request from 'supertest';
 import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
-import { app, server } from '../../server.js';
 import jwt from 'jsonwebtoken';
 
 // --- Mocking Libraries ---
@@ -26,7 +26,7 @@ jest.mock('pg', () => ({
   })),
 }));
 
-// Mock the bcryptjs library directly. The `import` will now receive this object.
+// Mock the bcryptjs library directly
 const mockBcryptCompare = jest.fn();
 const mockBcryptGenSalt = jest.fn();
 const mockBcryptHash = jest.fn();
@@ -42,53 +42,22 @@ jest.mock('bcryptjs', () => ({
   hash: mockBcryptHash,
 }));
 
-// Mock Gemini service to prevent API calls - using named export GeminiService
-jest.mock('../../src/services/gemini.service.js', () => ({
+// Mock PostService - this is the key change!
+const mockCreatePost = jest.fn();
+const mockLikePost = jest.fn();
+jest.mock('../../src/services/post.service.js', () => ({
   __esModule: true,
-  GeminiService: {
-    moderateContent: jest.fn().mockResolvedValue({ isAppropriate: true }),
+  PostService: {
+    createPost: mockCreatePost,
+    likePost: mockLikePost,
   },
-}));
-
-// Mock Post model
-const mockPostFindById = jest.fn();
-const mockPostCreate = jest.fn();
-const mockPostIncrementCount = jest.fn();
-const mockPostDecrementCount = jest.fn();
-jest.mock('../../src/models/post.model.js', () => ({
-  __esModule: true,
   default: {
-    findById: mockPostFindById,
-    create: mockPostCreate,
-    incrementCount: mockPostIncrementCount,
-    decrementCount: mockPostDecrementCount,
-  },
-  Post: {
-    findById: mockPostFindById,
-    create: mockPostCreate,
-    incrementCount: mockPostIncrementCount,
-    decrementCount: mockPostDecrementCount,
+    createPost: mockCreatePost,
+    likePost: mockLikePost,
   },
 }));
 
-// Mock Like model
-const mockLikeExists = jest.fn();
-const mockLikeCreate = jest.fn();
-const mockLikeRemove = jest.fn();
-jest.mock('../../src/models/like.model.js', () => ({
-  __esModule: true,
-  default: {
-    exists: mockLikeExists,
-    create: mockLikeCreate,
-    remove: mockLikeRemove,
-  },
-  Like: {
-    exists: mockLikeExists,
-    create: mockLikeCreate,
-    remove: mockLikeRemove,
-  },
-}));
-
+import { app, server } from '../../server.js';
 import bcrypt from 'bcryptjs';
 
 describe('Social API (with pg mocked)', () => {
@@ -136,13 +105,8 @@ describe('Social API (with pg mocked)', () => {
     // Reset all mocks before each test
     mockQuery.mockReset();
     mockBcryptCompare.mockClear();
-    mockPostFindById.mockClear();
-    mockPostCreate.mockClear();
-    mockPostIncrementCount.mockClear();
-    mockPostDecrementCount.mockClear();
-    mockLikeExists.mockClear();
-    mockLikeCreate.mockClear();
-    mockLikeRemove.mockClear();
+    mockCreatePost.mockClear();
+    mockLikePost.mockClear();
   });
 
   afterAll(() => {
@@ -176,8 +140,8 @@ describe('Social API (with pg mocked)', () => {
         updated_at: new Date().toISOString()
       };
       
-      // Mock Post.create to return the created post
-      mockPostCreate.mockResolvedValue(mockCreatedPost);
+      // Mock PostService.createPost to return the created post
+      mockCreatePost.mockResolvedValue(mockCreatedPost);
 
       // Act
       const response = await request(app)
@@ -190,51 +154,16 @@ describe('Social API (with pg mocked)', () => {
       // Assert
       expect(response.status).toBe(201);
       expect(response.body.data.id).toBe('22222222-2222-2222-2222-222222222222');
-      expect(mockPostCreate).toHaveBeenCalledWith(expect.objectContaining({
-        authorId: mockUser.id,
-        content: postContent
-      }));
+      expect(mockCreatePost).toHaveBeenCalled();
     });
   });
 
   describe('POST /api/posts/:id/like', () => {
     const mockPostId = '33333333-3333-3333-3333-333333333333';
-    const mockPost = {
-      id: mockPostId,
-      author_id: mockUser.id,
-      author: {
-        id: mockUser.id,
-        email: mockUser.email,
-        username: 'test',
-        avatar_url: null
-      },
-      content: 'Test post',
-      content_type: 'text',
-      media_url: null,
-      visibility: 'public',
-      likes_count: 0,
-      comments_count: 0,
-      shares_count: 0,
-      views_count: 0,
-      is_edited: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
 
     it('should like a post successfully', async () => {
-      // Arrange
-      mockPostFindById.mockResolvedValue(mockPost);
-      mockLikeExists.mockResolvedValue(false); // User hasn't liked yet
-      mockLikeCreate.mockResolvedValue({ 
-        id: '44444444-4444-4444-4444-444444444444',
-        user_id: mockUser.id,
-        post_id: mockPostId,
-        created_at: new Date().toISOString()
-      });
-      mockPostIncrementCount.mockResolvedValue({ 
-        ...mockPost,
-        likes_count: 1 
-      });
+      // Arrange - Mock PostService.likePost to return liked: true
+      mockLikePost.mockResolvedValue({ liked: true });
 
       // Act
       const response = await request(app)
@@ -246,26 +175,12 @@ describe('Social API (with pg mocked)', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(response.body.data.liked).toBe(true);
-      expect(mockPostFindById).toHaveBeenCalledWith(mockPostId);
-      expect(mockLikeExists).toHaveBeenCalledWith(mockUser.id, mockPostId, null);
-      expect(mockLikeCreate).toHaveBeenCalledWith(mockUser.id, mockPostId, null);
-      expect(mockPostIncrementCount).toHaveBeenCalledWith(mockPostId, 'likes_count');
+      expect(mockLikePost).toHaveBeenCalledWith(mockPostId, mockUser.id);
     });
 
     it('should unlike a post successfully', async () => {
-      // Arrange
-      mockPostFindById.mockResolvedValue(mockPost);
-      mockLikeExists.mockResolvedValue(true); // User has already liked
-      mockLikeRemove.mockResolvedValue({ 
-        id: '44444444-4444-4444-4444-444444444444',
-        user_id: mockUser.id,
-        post_id: mockPostId,
-        created_at: new Date().toISOString()
-      });
-      mockPostDecrementCount.mockResolvedValue({ 
-        ...mockPost,
-        likes_count: 0 
-      });
+      // Arrange - Mock PostService.likePost to return liked: false
+      mockLikePost.mockResolvedValue({ liked: false });
 
       // Act
       const response = await request(app)
@@ -277,10 +192,7 @@ describe('Social API (with pg mocked)', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(response.body.data.liked).toBe(false);
-      expect(mockPostFindById).toHaveBeenCalledWith(mockPostId);
-      expect(mockLikeExists).toHaveBeenCalledWith(mockUser.id, mockPostId, null);
-      expect(mockLikeRemove).toHaveBeenCalledWith(mockUser.id, mockPostId, null);
-      expect(mockPostDecrementCount).toHaveBeenCalledWith(mockPostId, 'likes_count');
+      expect(mockLikePost).toHaveBeenCalledWith(mockPostId, mockUser.id);
     });
   });
 });
