@@ -1,10 +1,11 @@
-// CRITICAL: jest.mock must be STRICTLY BEFORE any imports for ESM to work
-// Mock auth middleware FIRST - before ANY imports, even jest itself
-// IMPORTANT: Cannot use jest.fn() here as jest is not imported yet - use plain function
+// Import jest/globals at the very top
+import { jest, describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
+import request from 'supertest';
+
+// Mock auth middleware - protect always inserts req.user
 jest.mock('../../src/middleware/auth.middleware.js', () => ({
   __esModule: true,
   protect: (req, res, next) => {
-    // Always set req.user to a valid object
     req.user = {
       id: '11111111-1111-1111-1111-111111111111',
       email: 'test@example.com',
@@ -14,51 +15,36 @@ jest.mock('../../src/middleware/auth.middleware.js', () => ({
   },
 }));
 
-// Now import jest so we can use jest.fn() for other mocks
-import { jest } from '@jest/globals';
+// Mock GeminiService
+jest.mock('../../src/services/gemini.service.js');
 
-// Mock GeminiService - ONLY what's needed for social post endpoints
-const mockModerateContent = jest.fn();
-jest.mock('../../src/services/gemini.service.js', () => ({
-  __esModule: true,
-  GeminiService: {
-    moderateContent: mockModerateContent,
-  },
-  default: {
-    moderateContent: mockModerateContent,
-  },
-}));
+// Mock PostService
+jest.mock('../../src/services/post.service.js');
 
-// Mock PostService - ONLY what's needed for social post endpoints
-const mockCreatePost = jest.fn();
-const mockFindById = jest.fn();
-const mockLikePost = jest.fn();
-jest.mock('../../src/services/post.service.js', () => ({
-  __esModule: true,
-  PostService: {
-    createPost: mockCreatePost,
-    findById: mockFindById,
-    likePost: mockLikePost,
-  },
-  default: {
-    createPost: mockCreatePost,
-    findById: mockFindById,
-    likePost: mockLikePost,
-  },
-}));
-
-// STRICTLY AFTER ALL MOCKS: now import app/server
-import request from 'supertest';
-import { describe, it, expect, beforeEach, afterAll, beforeAll } from '@jest/globals';
-import { app, server } from '../../server.js';
+// Dynamic import after mocks
+let app, server;
 
 describe('Social API Integration Tests', () => {
   let authToken;
   const mockUserId = '11111111-1111-1111-1111-111111111111';
+  let mockCreatePost, mockFindById, mockLikePost, mockModerateContent;
 
   beforeAll(async () => {
+    // Dynamic import after all mocks are set up
+    const m = await import('../../server.js');
+    app = m.app;
+    server = m.server;
+
+    // Import mocked services to get their mock functions
+    const { PostService } = await import('../../src/services/post.service.js');
+    const { GeminiService } = await import('../../src/services/gemini.service.js');
+
+    mockCreatePost = PostService.createPost;
+    mockFindById = PostService.findById;
+    mockLikePost = PostService.likePost;
+    mockModerateContent = GeminiService.moderateContent;
+
     // For these tests, we assume a valid auth token is provided
-    // In a real scenario, you'd log in first or use a test token
     authToken = 'mock-valid-token-for-testing';
   });
 
